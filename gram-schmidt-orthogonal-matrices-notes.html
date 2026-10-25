@@ -1,0 +1,3306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orthogonal Matrices, Gram&ndash;Schmidt, and A = QR &mdash; Linear Algebra Notes</title>
+  <meta name="description" content="A visual, worked-example guide to orthonormal vectors, orthogonal matrices, projections, the Gram-Schmidt process, A = QR factorization, and a NumPy implementation of orthonormal_basis.">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <style>
+    :root {
+      --bg-paper: #faf9f5;
+      --bg-card: #ffffff;
+      --ink-primary: #1e242b;
+      --ink-secondary: #4a5568;
+      --ink-muted: #718096;
+      --accent-blue: #2b6cb0;
+      --accent-teal: #0d9488;
+      --accent-amber: #d97706;
+      --accent-rose: #e11d48;
+      --border-subtle: #e5e2dc;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      background-color: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: 'Newsreader', Georgia, Cambria, "Times New Roman", Times, serif;
+      font-size: 1.15rem;
+      line-height: 1.78;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-sans-ui {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .math-block {
+      background: #ffffff;
+      border: 1px solid #e6e4dd;
+      border-left: 4px solid #2b6cb0;
+      border-radius: 0.5rem;
+      padding: 1.1rem 1.4rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .math-block-teal {
+      background: #ffffff;
+      border: 1px solid #d1e7e4;
+      border-left: 4px solid #0d9488;
+      border-radius: 0.5rem;
+      padding: 1.1rem 1.4rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .math-block-amber {
+      background: #ffffff;
+      border: 1px solid #f3e8d0;
+      border-left: 4px solid #d97706;
+      border-radius: 0.5rem;
+      padding: 1.1rem 1.4rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .math-block-rose {
+      background: #ffffff;
+      border: 1px solid #f5d5dc;
+      border-left: 4px solid #e11d48;
+      border-radius: 0.5rem;
+      padding: 1.1rem 1.4rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .olah-callout {
+      background: #f3f6fa;
+      border: 1px solid #d8e2ef;
+      border-radius: 0.6rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1.75rem 0;
+    }
+    .olah-callout-teal {
+      background: #f0fdf9;
+      border: 1px solid #c6ede5;
+      border-radius: 0.6rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1.75rem 0;
+    }
+    .olah-callout-amber {
+      background: #fffbeb;
+      border: 1px solid #f3e2b3;
+      border-radius: 0.6rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1.75rem 0;
+    }
+    .olah-callout-rose {
+      background: #fff5f7;
+      border: 1px solid #f5d0d8;
+      border-radius: 0.6rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1.75rem 0;
+    }
+    .note-check {
+      background: #fffbeb;
+      border: 1px solid #f3e2b3;
+      border-left: 4px solid #d97706;
+      border-radius: 0.5rem;
+      padding: 1.15rem 1.4rem;
+      margin: 1.6rem 0;
+    }
+    .katex-display {
+      margin: 0.35rem 0 !important;
+    }
+    .katex {
+      font-size: 1.06em !important;
+    }
+    table.olah-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    table.olah-table th {
+      background-color: #f4f2ec;
+      color: #2d3748;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid #d6d3c9;
+    }
+    table.olah-table td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid #e8e5dc;
+      vertical-align: top;
+    }
+    table.olah-table tr:last-child td {
+      border-bottom: none;
+    }
+    .deriv-step {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+    }
+    .deriv-step-highlight {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+    }
+    .viz-container {
+      background: #ffffff;
+      border: 1px solid #e5e2dc;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .viz-canvas {
+      display: block;
+      width: 100%;
+      border-radius: 0.5rem;
+      background: #ffffff;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .viz-canvas.orbit {
+      cursor: grab;
+    }
+    .viz-canvas.orbit:active {
+      cursor: grabbing;
+    }
+    input[type="range"] {
+      accent-color: #2b6cb0;
+    }
+    .practice-card {
+      background: #ffffff;
+      border: 1px solid #e5e2dc;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 1.25rem 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .practice-card .answer-reveal {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .practice-card .answer-reveal.show {
+      max-height: 2400px;
+      opacity: 1;
+    }
+    .practice-card .hint-reveal {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .practice-card .hint-reveal.show {
+      max-height: 400px;
+      opacity: 1;
+    }
+    code.inline {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84em;
+      background: #eef2f7;
+      color: #2d3748;
+      padding: 0.08rem 0.35rem;
+      border-radius: 0.3rem;
+    }
+    .code-card {
+      background: #1b2129;
+      border: 1px solid #2d3748;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      margin: 1.75rem 0;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    }
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.55rem 0.9rem;
+      background: #151a20;
+      border-bottom: 1px solid #2d3748;
+      color: #94a3b8;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+    .copy-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #cbd5e1;
+      border: 1px solid #3f4a5a;
+      border-radius: 0.3rem;
+      padding: 0.2rem 0.5rem;
+      background: transparent;
+      transition: background 0.15s ease, color 0.15s ease;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #2d3748;
+      color: #ffffff;
+    }
+    .code-card pre {
+      margin: 0;
+      padding: 1rem 1.15rem;
+      overflow-x: auto;
+      background: transparent !important;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.81rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      tab-size: 4;
+    }
+    .code-card pre[class*="language-"] {
+      background: transparent !important;
+      margin: 0;
+    }
+    .code-card pre code {
+      font-family: inherit;
+      font-size: inherit;
+      background: none !important;
+      padding: 0;
+      text-shadow: none !important;
+      color: #e2e8f0;
+    }
+    .output-card {
+      background: #0f1720;
+      border: 1px solid #263241;
+      border-radius: 0.6rem;
+      padding: 1rem 1.15rem;
+      margin: 1.25rem 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: #cbd5e1;
+      white-space: pre;
+    }
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 0.28rem 0.65rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      color: #475569;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 999px;
+      margin-right: 0.35rem;
+      vertical-align: 0.02rem;
+    }
+    .step-desc {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.55rem;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      font-size: 0.98rem;
+      min-height: 5.4rem;
+    }
+    .step-desc p:last-child {
+      margin-bottom: 0;
+    }
+    @media print {
+      header, footer, .nav-jump, button, .copy-btn {
+        display: none !important;
+      }
+      body {
+        background: #ffffff;
+      }
+      .answer-reveal, .hint-reveal {
+        max-height: none !important;
+        opacity: 1 !important;
+      }
+      .code-card, .output-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Top editorial header -->
+  <header class="border-b border-[#e5e2dc] bg-[#faf9f5]/95 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-2 font-sans-ui">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-700 inline-block"></span>
+        <span class="text-xs font-semibold tracking-wider uppercase text-slate-600">Linear Algebra</span>
+        <span class="text-slate-300">|</span>
+        <span class="text-xs text-blue-700 font-medium">MIT 18.06 &middot; Lecture 17</span>
+      </div>
+      <nav class="flex flex-wrap items-center gap-1 sm:gap-1.5 text-xs">
+        <button type="button" data-scroll="sec-1" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">1. Orthonormal</button>
+        <button type="button" data-scroll="sec-2" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">2. Examples</button>
+        <button type="button" data-scroll="sec-3" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">3. Projections</button>
+        <button type="button" data-scroll="sec-4" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">4. Gram&ndash;Schmidt</button>
+        <button type="button" data-scroll="sec-5" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">5. A = QR</button>
+        <button type="button" data-scroll="sec-6" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">6. Code</button>
+        <button type="button" data-scroll="sec-7" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">7. Practice</button>
+        <button type="button" data-scroll="sec-8" class="nav-jump px-2 py-1 rounded hover:bg-slate-200/70 text-slate-700 font-medium transition">8. Takeaways</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-5 sm:px-8 pt-10 pb-24">
+
+    <!-- Article title -->
+    <div class="border-b border-[#e5e2dc] pb-8 mb-10">
+      <div class="font-sans-ui text-xs font-semibold uppercase tracking-widest text-blue-800 mb-3">
+        Linear Algebra &middot; Orthogonality &amp; Factorization
+      </div>
+      <h1 class="font-sans-ui text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight mb-4">
+        Orthogonal Matrices, Gram&ndash;Schmidt, and $A = QR$
+      </h1>
+      <p class="text-lg text-slate-600 italic mb-5">
+        A crooked basis forces you to solve systems. A perpendicular unit-length basis lets you read coordinates off with dot products. Gram&ndash;Schmidt is the procedure that straightens the basis, and $A = QR$ is the receipt that records every projection it made.
+      </p>
+      <div class="font-sans-ui text-xs text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-2 pt-2">
+        <div>
+          <strong class="text-slate-700">Source:</strong>
+          <a href="https://www.youtube.com/watch?v=0MtwqhIwdrI" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">MIT 18.06 Lecture 17 &middot; Gilbert Strang</a>
+        </div>
+        <div>
+          <strong class="text-slate-700">Textbook:</strong>
+          <span>Strang, <em>Introduction to Linear Algebra</em>, &sect;4.4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opening hook -->
+    <section class="mb-12">
+      <p class="mb-4">
+        Imagine inheriting a coordinate system that is <em>technically valid but visibly crooked</em>. To find the coordinates of a vector, you solve a linear system. To project onto a plane, you invert a matrix. Every calculation works, but every calculation carries a price.
+      </p>
+      <p class="mb-4">
+        Now straighten the axes until each one has unit length and every pair meets at $90^\circ$. Suddenly coordinates are just dot products, projections are sums of one-dimensional projections, and the inverse disappears from the least-squares formula. The basis has not changed the underlying space &mdash; it has changed how <em>cheaply</em> the space can be described.
+      </p>
+      <p>
+        That is the whole story of this lecture. <strong>Orthogonal matrices</strong> are the straight bases. <strong>Gram&ndash;Schmidt</strong> is the machine that straightens a given basis. <strong>$A = QR$</strong> is the matrix factorization that keeps the receipts.
+      </p>
+
+      <div class="olah-callout">
+        <div class="font-sans-ui text-sm font-semibold text-blue-900 mb-1">&#127919; Core Theme of Lecture 17</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          Working with an orthonormal basis makes projections and least-squares calculations effortless because $Q^TQ = I$ eliminates matrix inversions. When a matrix $A$ starts with merely independent columns, Gram&ndash;Schmidt orthogonalizes and normalizes those columns step by step to produce $Q$, captured algebraically by the factorization $A = QR$.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 1 - ORTHONORMAL VECTORS AND ORTHOGONAL MATRICES          -->
+    <!-- ================================================================ -->
+    <section id="sec-1" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">1</span>
+        Orthonormal Vectors and Orthogonal Matrices
+      </h2>
+
+      <p class="mb-4">
+        A set of vectors is <strong>orthonormal</strong> when it satisfies two separate promises: every vector is perpendicular to every other vector (<em>ortho</em>), and every vector has unit length (<em>normal</em>). The standard basis $e_1, e_2, \ldots, e_n$ is the simplest example, but the idea is far more general.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">1.1 The Definition, in One Equation</h3>
+
+      <p class="mb-3">
+        Vectors $q_1, q_2, \ldots, q_n \in \mathbb{R}^m$ are orthonormal if their dot products form the identity pattern:
+      </p>
+
+      <div class="math-block">
+        $$q_i^Tq_j = \delta_{ij} =
+        \begin{cases}
+          1, & i = j \quad \text{(normalized: } \|q_i\|^2 = q_i^Tq_i = 1\text{)} \\[4pt]
+          0, & i \ne j \quad \text{(orthogonal: } q_i \perp q_j\text{)}
+        \end{cases}$$
+      </div>
+
+      <p class="mb-4">
+        The symbol $\delta_{ij}$ is the <strong>Kronecker delta</strong>: it equals $1$ on the diagonal and $0$ everywhere else. The single equation is doing two jobs at once, which is exactly why it is so useful.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">1.2 Orthonormality Forces Linear Independence</h3>
+
+      <p class="mb-3">
+        This is the first pay-off. Suppose a linear combination of orthonormal vectors is zero:
+      </p>
+
+      <div class="math-block">
+        $$c_1q_1 + c_2q_2 + \cdots + c_nq_n = 0.$$
+      </div>
+
+      <p class="mb-3">
+        Take the dot product of both sides with $q_k$. Every term vanishes except the $k$-th one:
+      </p>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Why Orthonormal Sets Are Automatically Independent</div>
+        $$q_k^T\left(\sum_{i=1}^{n} c_iq_i\right) = \sum_{i=1}^{n} c_i\,q_k^Tq_i = c_k.$$
+        <p class="text-[1rem] mt-2 mb-0">
+          But the left-hand side is $q_k^T0 = 0$, so $c_k = 0$. This holds for every $k$, hence all coefficients are zero and the vectors are linearly independent.
+        </p>
+      </div>
+
+      <p class="mb-4">
+        Geometrically, orthonormal vectors point along mutually perpendicular directions, so no nontrivial combination can cancel itself out. In numerical work, unit-length vectors are also prized because scaling by a unit vector never overflows or underflows.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">1.3 Matrices with Orthonormal Columns Satisfy $Q^TQ = I$</h3>
+
+      <p class="mb-3">
+        Place $n$ orthonormal vectors in the columns of an $m \times n$ matrix $Q$:
+      </p>
+
+      <div class="math-block">
+        $$Q = \begin{bmatrix}
+        | & | & & | \\
+        q_1 & q_2 & \cdots & q_n \\
+        | & | & & |
+        \end{bmatrix}_{m \times n}.$$
+      </div>
+
+      <p class="mb-3">
+        The rows of $Q^T$ are $q_1^T, q_2^T, \ldots, q_n^T$. Multiplying $Q^T$ by $Q$ therefore computes an entire table of dot products at once:
+      </p>
+
+      <div class="math-block">
+        $$Q^TQ =
+        \begin{bmatrix}
+          q_1^Tq_1 & q_1^Tq_2 & \cdots & q_1^Tq_n \\
+          q_2^Tq_1 & q_2^Tq_2 & \cdots & q_2^Tq_n \\
+          \vdots & \vdots & \ddots & \vdots \\
+          q_n^Tq_1 & q_n^Tq_2 & \cdots & q_n^Tq_n
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+        \end{bmatrix}
+        = I_n.$$
+      </div>
+
+      <div class="olah-callout-teal">
+        <div class="font-sans-ui text-sm font-semibold text-teal-900 mb-1">&#128214; How to Read $Q^TQ = I$</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          Row $i$ of $Q^T$ meets column $j$ of $Q$ in the single number $q_i^Tq_j$. Orthonormality says that number is $1$ when $i = j$ and $0$ otherwise. The identity matrix is not an accident; it is a <em>table of all pairwise dot products</em>.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">1.4 Rectangular vs. Square: The Vocabulary Trap</h3>
+
+      <p class="mb-3">
+        There is an important distinction hiding inside the shape of $Q$. If $Q$ is $m \times n$ with $m \gt n$, then $Q^TQ$ is $n \times n$, while $QQ^T$ is $m \times m$. Both cannot be the identity unless $m = n$.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+        <div class="olah-callout">
+          <div class="font-sans-ui text-sm font-bold text-blue-900 mb-2">Rectangular $Q$ &nbsp;$(m \gt n)$</div>
+          <p class="text-[0.93rem] text-slate-700 mb-2">
+            The columns are orthonormal, so
+          </p>
+          <div class="math-block-teal my-2">
+            $$Q^TQ = I_n, \qquad QQ^T = P \ne I_m.$$
+          </div>
+          <p class="text-[0.93rem] text-slate-700 mb-0">
+            Here $P$ is the <strong>projection matrix</strong> onto the column space $\mathcal{C}(Q)$. We say &ldquo;$Q$ has orthonormal columns&rdquo; &mdash; not &ldquo;$Q$ is orthogonal.&rdquo;
+          </p>
+        </div>
+        <div class="olah-callout-teal">
+          <div class="font-sans-ui text-sm font-bold text-teal-900 mb-2">Square $Q$ &nbsp;$(m = n)$</div>
+          <p class="text-[0.93rem] text-slate-700 mb-2">
+            Left inverse and right inverse coincide:
+          </p>
+          <div class="math-block-teal my-2">
+            $$Q^TQ = I \iff Q^T = Q^{-1} \iff QQ^T = I.$$
+          </div>
+          <p class="text-[0.93rem] text-slate-700 mb-0">
+            Now $Q$ is called an <strong>orthogonal matrix</strong>. Its rows are orthonormal too, and $Q^T$ is also orthogonal.
+          </p>
+        </div>
+      </div>
+
+      <div class="note-check">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#9888; Vocabulary trap</div>
+        <p class="text-[0.95rem] text-slate-700 mb-0">
+          In standard mathematical usage, &ldquo;orthogonal matrix&rdquo; means a <strong>square</strong> matrix with orthonormal columns. A rectangular matrix with orthonormal columns is described as having orthonormal columns. The distinction matters because only the square case gives $Q^{-1} = Q^T$.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">1.5 Orthogonal Matrices Preserve Length, Angle, and Dot Products</h3>
+
+      <p class="mb-3">
+        If $Q$ is square orthogonal, multiplying a vector by $Q$ rotates or reflects it but never stretches or skews it. The proof is two lines:
+      </p>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Length Is Preserved</div>
+        $$\|Qx\|^2 = (Qx)^T(Qx) = x^TQ^TQx = x^T I x = x^Tx = \|x\|^2.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Inner Products &mdash; and Therefore Angles &mdash; Are Preserved</div>
+        $$(Qx)^T(Qy) = x^TQ^TQy = x^Ty.$$
+        <p class="text-[1rem] mt-2 mb-0">
+          Since the dot product is unchanged, the angle $\theta$ between $Qx$ and $Qy$ satisfies
+          $\cos\theta' = \dfrac{(Qx)^T(Qy)}{\|Qx\|\,\|Qy\|} = \dfrac{x^Ty}{\|x\|\,\|y\|} = \cos\theta$.
+        </p>
+      </div>
+
+      <div class="olah-callout-amber">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#128161; Two facts worth filing away</div>
+        <ul class="list-disc ml-5 text-[0.95rem] text-slate-700 space-y-2 mb-0">
+          <li>
+            <strong>Determinant is $\pm 1$.</strong> Since $1 = \det(I) = \det(Q^TQ) = \det(Q)^2$, an orthogonal matrix has $\det(Q) = +1$ (a rotation) or $\det(Q) = -1$ (a reflection).
+          </li>
+          <li>
+            <strong>Condition number is $1$.</strong> For square orthogonal $Q$, $\|Q\|_2 = \|Q^{-1}\|_2 = 1$, so $\kappa_2(Q) = 1$. An orthogonal change of basis cannot amplify relative error &mdash; a numerical superpower.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 2 - CANONICAL EXAMPLES                                   -->
+    <!-- ================================================================ -->
+    <section id="sec-2" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">2</span>
+        Canonical Examples of Orthogonal Matrices
+      </h2>
+
+      <p class="mb-4">
+        The fastest way to recognize an orthogonal matrix is to know the standard families. Each one performs a familiar geometric action, and each one satisfies $Q^TQ = I$ for a visible reason.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">2.1 Permutation Matrices: Reordering the Axes</h3>
+
+      <p class="mb-3">
+        A <strong>permutation matrix</strong> has exactly one $1$ in each row and each column, and zeros elsewhere. Its columns are the standard basis vectors, merely reordered, so they are automatically unit length and mutually perpendicular.
+      </p>
+
+      <div class="math-block">
+        $$Q = \begin{bmatrix}
+        0 & 0 & 1 \\
+        1 & 0 & 0 \\
+        0 & 1 & 0
+        \end{bmatrix},
+        \qquad
+        Q^T = \begin{bmatrix}
+        0 & 1 & 0 \\
+        0 & 0 & 1 \\
+        1 & 0 & 0
+        \end{bmatrix} = Q^{-1},
+        \qquad
+        Q^TQ = I_3.$$
+      </div>
+
+      <p class="mb-4">
+        Multiplying by $Q$ simply moves coordinates around: it is a relabeling of the axes, not a deformation of space. Its determinant is $+1$ or $-1$ depending on whether the permutation is even or odd.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">2.2 Plane Rotations: The Prototypical Orthogonal Matrix</h3>
+
+      <p class="mb-3">
+        Rotating the plane counterclockwise by an angle $\theta$ gives
+      </p>
+
+      <div class="math-block">
+        $$Q = \begin{bmatrix}
+        \cos\theta & -\sin\theta \\
+        \sin\theta & \cos\theta
+        \end{bmatrix},
+        \qquad
+        Q^T = \begin{bmatrix}
+        \cos\theta & \sin\theta \\
+        -\sin\theta & \cos\theta
+        \end{bmatrix} = Q^{-1}.$$
+      </div>
+
+      <p class="mb-3">
+        We can verify orthonormality directly from the entries:
+      </p>
+
+      <ul class="list-disc ml-6 space-y-2 mb-4">
+        <li><strong>Unit length:</strong> $\|q_1\|^2 = \cos^2\theta + \sin^2\theta = 1$, and similarly $\|q_2\|^2 = (-\sin\theta)^2 + \cos^2\theta = 1$.</li>
+        <li><strong>Orthogonality:</strong> $q_1^Tq_2 = -\cos\theta\sin\theta + \sin\theta\cos\theta = 0$.</li>
+        <li><strong>Geometric inverse:</strong> $Q^{-1} = Q^T$ is rotation by $-\theta$, i.e. clockwise by $\theta$.</li>
+        <li><strong>Determinant:</strong> $\det(Q) = \cos^2\theta + \sin^2\theta = 1$, confirming it is a pure rotation.</li>
+      </ul>
+
+      <!-- Interactive: rotation preserves length and angles -->
+      <div class="viz-container" id="rotation-viz">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="font-sans-ui text-sm font-bold text-slate-700">Interactive: A Rotation Preserves Length and Angle</div>
+          <span class="stat-pill">2D rotation</span>
+        </div>
+        <p class="font-sans-ui text-xs text-slate-500 mb-4">
+          Drag the slider to rotate the blue and rose vectors. The dashed gray vectors are the originals; watch the lengths and the angle between them stay fixed.
+        </p>
+        <div class="flex flex-wrap items-center gap-4 mb-4 font-sans-ui text-sm">
+          <label class="flex items-center gap-2">
+            <span class="text-slate-600 font-medium">Angle $\theta$:</span>
+            <input type="range" id="rot-slider" min="0" max="360" step="1" value="35" class="w-44 sm:w-56">
+            <span id="rot-val" class="font-mono-code text-blue-700 font-semibold w-12">35&deg;</span>
+          </label>
+          <button type="button" id="rot-reset" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition">Reset</button>
+        </div>
+        <canvas id="rotation-canvas" class="viz-canvas" height="300"></canvas>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 font-sans-ui text-xs text-slate-600">
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$\|x\|$</div>
+            <div id="rot-norm-x" class="font-mono-code text-blue-700 font-semibold">0.000</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$\|Qx\|$</div>
+            <div id="rot-norm-qx" class="font-mono-code text-blue-700 font-semibold">0.000</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">Angle(x, y)</div>
+            <div id="rot-angle-xy" class="font-mono-code text-slate-700 font-semibold">0.00&deg;</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">Angle(Qx, Qy)</div>
+            <div id="rot-angle-q" class="font-mono-code text-teal-700 font-semibold">0.00&deg;</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 mt-3 font-sans-ui text-xs text-slate-500">
+          <div><span class="legend-dot bg-slate-400"></span>Original vectors</div>
+          <div><span class="legend-dot bg-blue-600"></span>$Qx$</div>
+          <div><span class="legend-dot bg-rose-500"></span>$Qy$</div>
+        </div>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">2.3 The Normalized Reflection / Haar Matrix</h3>
+
+      <p class="mb-3">
+        The matrix
+      </p>
+
+      <div class="math-block">
+        $$A = \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}$$
+      </div>
+
+      <p class="mb-3">
+        has columns that are orthogonal but not normalized:
+      </p>
+
+      <ul class="list-disc ml-6 space-y-2 mb-4">
+        <li>$q_1^Tq_2 = (1)(1) + (1)(-1) = 0$ &mdash; perpendicular.</li>
+        <li>$\|q_1\| = \sqrt{1^2 + 1^2} = \sqrt{2}$ and $\|q_2\| = \sqrt{1^2 + (-1)^2} = \sqrt{2}$ &mdash; too long.</li>
+      </ul>
+
+      <p class="mb-3">
+        Dividing by the common length $\sqrt{2}$ produces an orthogonal matrix:
+      </p>
+
+      <div class="math-block">
+        $$Q = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}
+        =
+        \begin{bmatrix}
+        1/\sqrt{2} & 1/\sqrt{2} \\
+        1/\sqrt{2} & -1/\sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        This is the $2 \times 2$ <strong>Haar transform</strong>, a reflection-type orthogonal matrix with $\det(Q) = -1$. It is the simplest example of a matrix that is orthogonal but not a rotation.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">2.4 Hadamard Matrices: Orthogonality with $\pm 1$ Entries</h3>
+
+      <p class="mb-3">
+        Begin with the $2 \times 2$ block
+      </p>
+
+      <div class="math-block">
+        $$H_2 = \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        Repeating it in the block pattern $\begin{bmatrix} H_2 & H_2 \\ H_2 & -H_2 \end{bmatrix}$ and dividing by the column length $\sqrt{1^2 + 1^2 + 1^2 + 1^2} = \sqrt{4} = 2$ gives the $4 \times 4$ <strong>Hadamard matrix</strong>:
+      </p>
+
+      <div class="math-block">
+        $$Q = \frac{1}{2}
+        \begin{bmatrix}
+        1 & 1 & 1 & 1 \\
+        1 & -1 & 1 & -1 \\
+        1 & 1 & -1 & -1 \\
+        1 & -1 & -1 & 1
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        Every entry is $+1$ or $-1$. Each column has length $\sqrt{4} = 2$, and distinct columns cancel in pairs because they agree in exactly two positions and disagree in exactly two positions.
+      </p>
+
+      <div class="note-check">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#128161; Common Pitfall &mdash; The Hadamard Sign Pattern</div>
+        <p class="text-[0.95rem] text-slate-700 mb-2">
+          Two details are easy to get wrong when building the $4 \times 4$ Hadamard matrix:
+        </p>
+        <ol class="list-decimal ml-5 text-[0.93rem] text-slate-700 space-y-1.5 mb-0">
+          <li>
+            <strong>The name is Hadamard.</strong> The matrix is named after Jacques Hadamard. It is an orthogonal matrix scaled so every entry is $+1$ or $-1$.
+          </li>
+          <li>
+            <strong>The bottom-right block is negated.</strong> The bottom-right $2 \times 2$ block must be $-H_2 = \begin{bmatrix} -1 & -1 \\ -1 & 1 \end{bmatrix}$, not $H_2 = \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}$. With the correct sign, column 1 is orthogonal to column 3 ($1 + 1 - 1 - 1 = 0$) and column 2 is orthogonal to column 4 ($1 - 1 - 1 + 1 = 0$).
+          </li>
+        </ol>
+      </div>
+
+      <p class="mb-4">
+        Hadamard matrices exist for $n = 1, 2$ and all powers of $2$ ($4, 8, 16, 64, \ldots$). For $n \gt 2$, a necessary condition is that $n$ be a multiple of $4$; whether every such $n$ admits one is the famous <em>Hadamard conjecture</em>.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">2.5 Rectangular Orthonormal Matrices and Completing the Basis</h3>
+
+      <p class="mb-3">
+        Orthonormal columns do not need to fill the whole ambient space. The rectangular matrix
+      </p>
+
+      <div class="math-block">
+        $$Q_{\text{rect}} = \frac{1}{3}
+        \begin{bmatrix}
+        1 & -2 \\
+        2 & -1 \\
+        2 & 2
+        \end{bmatrix}$$
+      </div>
+
+      <p class="mb-3">
+        has columns of length $\sqrt{1^2 + 2^2 + 2^2}/3 = 3/3 = 1$ (the factor $1/3$ normalizes the integer columns), and the two columns are orthogonal. Therefore
+      </p>
+
+      <div class="math-block-teal">
+        $$Q_{\text{rect}}^TQ_{\text{rect}} = I_2.$$
+      </div>
+
+      <p class="mb-3">
+        But $Q_{\text{rect}}Q_{\text{rect}}^T$ is a $3 \times 3$ projection matrix onto a plane, not $I_3$. The two columns span a $2$-dimensional plane inside $\mathbb{R}^3$. Adding the third mutually orthogonal unit vector
+      </p>
+
+      <div class="math-block">
+        $$q_3 = \frac{1}{3}\begin{bmatrix} 2 \\ -2 \\ 1 \end{bmatrix}$$
+      </div>
+
+      <p class="mb-3">
+        completes an orthonormal basis for all of $\mathbb{R}^3$:
+      </p>
+
+      <div class="math-block">
+        $$Q_{\text{square}} = \frac{1}{3}
+        \begin{bmatrix}
+        1 & -2 & 2 \\
+        2 & -1 & -2 \\
+        2 & 2 & 1
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        You can check the new column against the old ones: $q_1^Tq_3 = (2 - 4 + 2)/9 = 0$ and $q_2^Tq_3 = (-4 + 2 + 2)/9 = 0$. The plane was always there; completing the basis simply chose a perpendicular direction outside it.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">2.6 The Matrix Zoo at a Glance</h3>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Matrix</th>
+              <th>Size</th>
+              <th>$Q^TQ$</th>
+              <th>$QQ^T$</th>
+              <th>$\det(Q)$</th>
+              <th>What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold">Permutation</td>
+              <td>$3 \times 3$</td>
+              <td>$I_3$</td>
+              <td>$I_3$</td>
+              <td>$\pm 1$</td>
+              <td>Reorders the axes</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Rotation</td>
+              <td>$2 \times 2$</td>
+              <td>$I_2$</td>
+              <td>$I_2$</td>
+              <td>$+1$</td>
+              <td>Rotates by $\theta$</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Haar / reflection</td>
+              <td>$2 \times 2$</td>
+              <td>$I_2$</td>
+              <td>$I_2$</td>
+              <td>$-1$</td>
+              <td>Reflects and normalizes</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Hadamard</td>
+              <td>$4 \times 4$</td>
+              <td>$I_4$</td>
+              <td>$I_4$</td>
+              <td>$\pm 1$</td>
+              <td>Mixes signs with $\pm 1$ entries</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Rectangular</td>
+              <td>$3 \times 2$</td>
+              <td>$I_2$</td>
+              <td>$P \ne I_3$</td>
+              <td>n/a</td>
+              <td>Basis for a plane in $\mathbb{R}^3$</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="olah-callout">
+        <div class="font-sans-ui text-sm font-semibold text-blue-900 mb-1">&#129517; The pattern to remember</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          In every square example, $Q^TQ = QQ^T = I$: the columns and rows are both orthonormal. In the rectangular example, only the smaller product $Q^TQ$ is the identity; the larger product is a projection. The shape of the matrix tells you which identity to expect.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 3 - PROJECTIONS AND LEAST SQUARES                        -->
+    <!-- ================================================================ -->
+    <section id="sec-3" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">3</span>
+        Why Orthonormal Columns Simplify Projections and Least Squares
+      </h2>
+
+      <p class="mb-4">
+        The practical reason engineers love orthonormal bases is not aesthetic. It is that an entire matrix inverse disappears from the two most common calculations in data fitting: <strong>projection</strong> and <strong>least squares</strong>.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">3.1 The General Least-Squares Problem</h3>
+
+      <p class="mb-3">
+        Suppose $A$ is $m \times n$ with $m \gt n$, and the system $Ax = b$ has no exact solution because $b$ is not in the column space $\mathcal{C}(A)$. We look for the vector $\hat{x}$ whose image $A\hat{x}$ is as close to $b$ as possible:
+      </p>
+
+      <div class="math-block">
+        $$\hat{x} = \arg\min_x \|b - Ax\|^2.$$
+      </div>
+
+      <p class="mb-3">
+        Let $p = A\hat{x}$ be the closest point in the column space. The error vector
+      </p>
+
+      <div class="math-block">
+        $$e = b - p = b - A\hat{x}$$
+      </div>
+
+      <p class="mb-3">
+        must be perpendicular to <em>every</em> column of $A$. Otherwise we could move $p$ slightly inside $\mathcal{C}(A)$ and shorten the error. Since the columns of $A$ span $\mathcal{C}(A)$, this says $A^Te = 0$:
+      </p>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 1 &mdash; Orthogonality Condition</div>
+        $$A^T(b - A\hat{x}) = 0.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 2 &mdash; Expand</div>
+        $$A^Tb - A^TA\hat{x} = 0.$$
+      </div>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 3 &mdash; The Normal Equations</div>
+        $$A^TA\hat{x} = A^Tb.$$
+        <p class="text-[1rem] mt-2 mb-0">
+          If the columns of $A$ are independent, $A^TA$ is invertible, so
+          $\hat{x} = (A^TA)^{-1}A^Tb$ and the projection matrix is $P = A(A^TA)^{-1}A^T$.
+        </p>
+      </div>
+
+      <p class="mb-4">
+        This is the general recipe. It works, but it contains two matrix inversions in disguise: solving the $n \times n$ normal equations, and forming $(A^TA)^{-1}$ if you want the projection matrix explicitly.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">3.2 The Orthonormal Case: Every Inverse Collapses</h3>
+
+      <p class="mb-3">
+        Now suppose the basis matrix is $Q = [q_1\ q_2\ \cdots\ q_n]$ with orthonormal columns, so $Q^TQ = I_n$. The normal equations become
+      </p>
+
+      <div class="math-block-teal">
+        $$Q^TQ\hat{x} = Q^Tb
+        \quad\Longrightarrow\quad
+        I_n\hat{x} = Q^Tb
+        \quad\Longrightarrow\quad
+        \boxed{\hat{x} = Q^Tb}.$$
+      </div>
+
+      <p class="mb-3">
+        In components, this is even more striking:
+      </p>
+
+      <div class="math-block-teal">
+        $$\hat{x}_i = q_i^Tb.$$
+      </div>
+
+      <p class="mb-4">
+        The $i$-th coefficient depends <em>only</em> on the $i$-th basis vector and $b$. In a general basis, solving $A^TA\hat{x} = A^Tb$ couples all coefficients together through the inverse of $A^TA$. In an orthonormal basis, the coupling matrix is the identity, so the system is already solved.
+      </p>
+
+      <div class="olah-callout">
+        <div class="font-sans-ui text-sm font-semibold text-blue-900 mb-1">&#127919; Decoupling is the whole game</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          An orthonormal basis turns a coupled linear system into a list of independent dot products. This is the same reason a Fourier series is easy to compute: the basis functions are orthogonal, so each coefficient can be extracted by one inner product without disturbing the others.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">3.3 The Projection Matrix Becomes $QQ^T$</h3>
+
+      <p class="mb-3">
+        Substitute $A = Q$ into the general projection formula:
+      </p>
+
+      <div class="math-block">
+        $$P = Q(Q^TQ)^{-1}Q^T = QIQ^T = QQ^T.$$
+      </div>
+
+      <p class="mb-3">
+        If $Q$ is rectangular ($m \gt n$), $P = QQ^T$ is an $m \times m$ matrix of rank $n$ that projects vectors onto the $n$-dimensional column space. If $Q$ is square ($m = n$), its columns span all of $\mathbb{R}^m$, so projecting onto the whole space changes nothing: $P = QQ^T = I_m$.
+      </p>
+
+      <p class="mb-3">
+        Applying $P$ to $b$ gives the projected vector as a sum of one-dimensional projections:
+      </p>
+
+      <div class="math-block">
+        $$p = QQ^Tb =
+        \begin{bmatrix}
+        | & | & & | \\
+        q_1 & q_2 & \cdots & q_n \\
+        | & | & & |
+        \end{bmatrix}
+        \begin{bmatrix}
+        q_1^Tb \\
+        q_2^Tb \\
+        \vdots \\
+        q_n^Tb
+        \end{bmatrix}
+        = (q_1^Tb)q_1 + (q_2^Tb)q_2 + \cdots + (q_n^Tb)q_n.$$
+      </div>
+
+      <p class="mb-4">
+        Each term is the shadow of $b$ along one basis direction. Because the directions are perpendicular, the shadows do not interfere; you can add them independently. This is the geometric content of $QQ^T = \sum_{i=1}^{n} q_iq_i^T$.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">3.4 Why $P = QQ^T$ Really Is a Projection</h3>
+
+      <p class="mb-3">
+        A matrix is an orthogonal projection exactly when it is symmetric and idempotent. Both properties follow immediately from $Q^TQ = I$:
+      </p>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Symmetry: $P^T = P$</div>
+        $$P^T = (QQ^T)^T = (Q^T)^TQ^T = QQ^T = P.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Idempotence: $P^2 = P$</div>
+        $$P^2 = (QQ^T)(QQ^T) = Q(Q^TQ)Q^T = QIQ^T = QQ^T = P.$$
+      </div>
+
+      <p class="mb-4">
+        Idempotence is the algebraic statement that projecting twice is the same as projecting once: after the first projection, the vector is already in the column space, so the second projection leaves it alone.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">3.5 A Worked Projection Without Any Inversion</h3>
+
+      <p class="mb-3">
+        Reuse the rectangular matrix from Section 2:
+      </p>
+
+      <div class="math-block">
+        $$Q = \frac{1}{3}\begin{bmatrix} 1 & -2 \\ 2 & -1 \\ 2 & 2 \end{bmatrix},
+        \qquad
+        b = \begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        First read off the coefficients with dot products:
+      </p>
+
+      <div class="math-block">
+        $$Q^Tb = \frac{1}{3}\begin{bmatrix}
+        (1)(1) + (2)(1) + (2)(1) \\
+        (-2)(1) + (-1)(1) + (2)(1)
+        \end{bmatrix}
+        = \frac{1}{3}\begin{bmatrix} 5 \\ -1 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        Then add the two one-dimensional projections:
+      </p>
+
+      <div class="math-block">
+        $$p = QQ^Tb = \frac{5}{9}\begin{bmatrix} 1 \\ 2 \\ 2 \end{bmatrix} - \frac{1}{9}\begin{bmatrix} -2 \\ -1 \\ 2 \end{bmatrix}
+        = \begin{bmatrix} 7/9 \\ 11/9 \\ 8/9 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        The error is
+      </p>
+
+      <div class="math-block">
+        $$e = b - p = \begin{bmatrix} 2/9 \\ -2/9 \\ 1/9 \end{bmatrix},
+        \qquad
+        Q^Te = \begin{bmatrix} 0 \\ 0 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        No $3 \times 3$ matrix was inverted, no normal equations were solved, and the perpendicularity is visible in the final zero vector. This is what $Q^TQ = I$ buys you.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">3.6 The Comparison Table</h3>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Quantity / Operation</th>
+              <th>Independent columns $A$</th>
+              <th>Orthonormal columns $Q$, $m \gt n$</th>
+              <th>Square orthogonal $Q$, $m = n$</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold">Cross-product matrix</td>
+              <td>$A^TA$ invertible $n \times n$</td>
+              <td>$Q^TQ = I_n$</td>
+              <td>$Q^TQ = QQ^T = I_n$</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Normal equations</td>
+              <td>$A^TA\hat{x} = A^Tb$</td>
+              <td>$\hat{x} = Q^Tb$</td>
+              <td>$\hat{x} = Q^Tb = Q^{-1}b$</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">$i$-th coefficient</td>
+              <td>coupled through $(A^TA)^{-1}$</td>
+              <td>$\hat{x}_i = q_i^Tb$</td>
+              <td>$x_i = q_i^Tb$ (exact)</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Projection matrix $P$</td>
+              <td>$A(A^TA)^{-1}A^T$</td>
+              <td>$QQ^T = \sum_{i=1}^{n} q_iq_i^T$</td>
+              <td>$QQ^T = I_n$</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">Projected vector $p$</td>
+              <td>$A(A^TA)^{-1}A^Tb$</td>
+              <td>$\sum_{i=1}^{n}(q_i^Tb)q_i$</td>
+              <td>$p = b$, error $e = 0$</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-check">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#9888; Common Pitfall &mdash; Projection Notation</div>
+        <p class="text-[0.95rem] text-slate-700 mb-0">
+          A common slip is to write &ldquo;$A\hat{x} = p$ where $p$ is the projection of $p$ in the column space of $A$.&rdquo; The projection is of the <em>target vector</em> $b$, not of the projected vector $p$: $p = Pb$ is the projection of $b$ onto the column space $\mathcal{C}(A)$.
+        </p>
+      </div>
+
+      <div class="olah-callout-rose">
+        <div class="font-sans-ui text-sm font-semibold text-rose-900 mb-1">&#9888; But do not form the normal equations in practice</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          The normal equations square the condition number: $\kappa_2(A^TA) = \kappa_2(A)^2$. If $A$ is even moderately ill-conditioned, forming $A^TA$ can turn a solvable problem into numerical noise. The QR factorization in Section 5 avoids this by working directly with orthogonal transformations. That is why practical least-squares software rarely solves $A^TA\hat{x} = A^Tb$ explicitly.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 4 - GRAM-SCHMIDT                                         -->
+    <!-- ================================================================ -->
+    <section id="sec-4" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">4</span>
+        The Gram&ndash;Schmidt Orthogonalization Process
+      </h2>
+
+      <p class="mb-4">
+        Gram&ndash;Schmidt is what you do when you have a perfectly good basis but want a perpendicular one. It is a greedy algorithm: keep the first direction, remove its shadow from the second vector, remove both shadows from the third, and normalize at the end. Each new vector is the part of the original vector that points in a genuinely new direction.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">4.1 The Two-Stage Strategy: Gram, Then Schmidt</h3>
+
+      <p class="mb-3">
+        Given linearly independent vectors $a, b, c, \ldots$, we want orthonormal vectors $q_1, q_2, q_3, \ldots$ that span the same subspace at every step. Professor Strang splits the work into two clean stages so square roots appear only at the very end:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+        <div class="olah-callout">
+          <div class="font-sans-ui text-sm font-bold text-blue-900 mb-2">Stage 1 &mdash; Gram: Orthogonalize</div>
+          <p class="text-[0.93rem] text-slate-700 mb-2">
+            Build orthogonal vectors $A, B, C, \ldots$ by subtracting from each new vector its projections along the already-constructed orthogonal directions.
+          </p>
+          <p class="text-[0.93rem] text-slate-600 mb-0 italic">
+            The result is perpendicular, but not yet unit length.
+          </p>
+        </div>
+        <div class="olah-callout-teal">
+          <div class="font-sans-ui text-sm font-bold text-teal-900 mb-2">Stage 2 &mdash; Schmidt: Normalize</div>
+          <p class="text-[0.93rem] text-slate-700 mb-2">
+            Divide each orthogonal vector by its Euclidean norm:
+          </p>
+          <div class="math-block-teal my-2">
+            $$q_1 = \frac{A}{\|A\|}, \quad q_2 = \frac{B}{\|B\|}, \quad q_3 = \frac{C}{\|C\|}.$$
+          </div>
+        </div>
+      </div>
+
+      <p class="mb-4">
+        Separating the stages keeps the algebra clean: projection coefficients are easier to write with orthogonal (not necessarily unit) vectors, and normalization happens once per vector at the end.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">4.2 Step-by-Step Construction for $a, b, c$</h3>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">First Vector &mdash; Keep the First Direction</div>
+        $$A = a.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Second Vector &mdash; Remove the Shadow on $A$</div>
+        <p class="text-[1rem] mb-2">
+          Project $b$ onto $A$ to get $p = \dfrac{A^Tb}{A^TA}A$, then subtract that projection:
+        </p>
+        $$B = b - \frac{A^Tb}{A^TA}A.$$
+      </div>
+
+      <p class="mb-3">
+        Why is $A \perp B$? The algebra is short and worth seeing once:
+      </p>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Proof That the Residual Is Orthogonal</div>
+        $$A^TB = A^T\left(b - \frac{A^Tb}{A^TA}A\right)
+        = A^Tb - \frac{A^Tb}{A^TA}(A^TA)
+        = A^Tb - A^Tb = 0.$$
+        <p class="text-[0.95rem] mt-2 mb-0 text-slate-600">
+          The scalar $\dfrac{A^Tb}{A^TA}$ can pass through the matrix product, so the $(A^TA)$ terms cancel exactly. Because $a$ and $b$ are independent, $b$ is not a multiple of $A$, which guarantees $B \ne 0$.
+        </p>
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Third Vector &mdash; Remove Shadows on Both $A$ and $B$</div>
+        $$C = c - \frac{A^Tc}{A^TA}A - \frac{B^Tc}{B^TB}B.$$
+        <p class="text-[0.95rem] mt-2 mb-0 text-slate-600">
+          Because $A \perp B$, subtracting the $B$-component does not disturb orthogonality with $A$: $A^TC = A^Tc - A^Tc - 0 = 0$, and similarly $B^TC = 0$.
+        </p>
+      </div>
+
+      <p class="mb-3">
+        Once the vectors are normalized, the projection coefficient simplifies to a dot product with $q_i$, giving the general $k$-th step:
+      </p>
+
+      <div class="math-block-teal">
+        $$A_k = a_k - \sum_{i=1}^{k-1}(q_i^Ta_k)q_i,
+        \qquad
+        q_k = \frac{A_k}{\|A_k\|}.$$
+      </div>
+
+      <p class="mb-4">
+        The formula is recursive: each $q_k$ is built from the original $a_k$ and the <em>previous</em> orthonormal vectors. Nothing later is needed, which is what makes the algorithm practical.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">4.3 Worked Lecture Example</h3>
+
+      <p class="mb-3">
+        Take the two independent vectors in $\mathbb{R}^3$:
+      </p>
+
+      <div class="math-block">
+        $$a = \begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix},
+        \qquad
+        b = \begin{bmatrix} 1 \\ 0 \\ 2 \end{bmatrix}.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 1 &mdash; Fix the First Orthogonal Vector</div>
+        $$A = a = \begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix},
+        \qquad
+        A^TA = 1^2 + 1^2 + 1^2 = 3,
+        \qquad
+        \|A\| = \sqrt{3}.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 2 &mdash; Subtract the Projection of $b$</div>
+        <p class="text-[1rem] mb-2">
+          The dot product is $A^Tb = (1)(1) + (1)(0) + (1)(2) = 3$, so
+        </p>
+        $$B = b - \frac{A^Tb}{A^TA}A
+        = \begin{bmatrix} 1 \\ 0 \\ 2 \end{bmatrix} - \frac{3}{3}\begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix}
+        = \begin{bmatrix} 0 \\ -1 \\ 1 \end{bmatrix}.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Sanity Check</div>
+        $$A^TB = (1)(0) + (1)(-1) + (1)(1) = 0,
+        \qquad
+        \|B\| = \sqrt{0^2 + (-1)^2 + 1^2} = \sqrt{2}.$$
+      </div>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Step 3 &mdash; Normalize Both Directions</div>
+        $$Q = [q_1\ q_2] =
+        \begin{bmatrix}
+        1/\sqrt{3} & 0 \\
+        1/\sqrt{3} & -1/\sqrt{2} \\
+        1/\sqrt{3} & 1/\sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        Check the columns: $q_1^Tq_2 = 0 - 1/\sqrt{6} + 1/\sqrt{6} = 0$, and both have unit length. The span has not changed: $q_1$ is a scalar multiple of $a$, and $q_2$ is a combination of $a$ and $b$.
+      </p>
+
+      <!-- Interactive: drag two vectors and watch Gram-Schmidt -->
+      <div class="viz-container" id="gs-viz">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="font-sans-ui text-sm font-bold text-slate-700">Interactive: Gram&ndash;Schmidt in the Plane</div>
+          <span class="stat-pill">Drag the arrow tips</span>
+        </div>
+        <p class="font-sans-ui text-xs text-slate-500 mb-4">
+          Drag the tips of $a$ (blue) and $b$ (rose). The amber arrow is the projection $p$ of $b$ onto $a$; the teal arrow is the residual $B = b - p$. The thick short arrows are the normalized basis $q_1, q_2$.
+        </p>
+        <canvas id="gs-canvas" class="viz-canvas" height="380"></canvas>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 font-sans-ui text-xs text-slate-600">
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$a$</div>
+            <div id="gs-a" class="font-mono-code text-blue-700 font-semibold">[0.00, 0.00]</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$b$</div>
+            <div id="gs-b" class="font-mono-code text-rose-700 font-semibold">[0.00, 0.00]</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$p = \operatorname{proj}_a(b)$</div>
+            <div id="gs-p" class="font-mono-code text-amber-700 font-semibold">[0.00, 0.00]</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$\|B\| = \|b - p\|$</div>
+            <div id="gs-norm-b" class="font-mono-code text-teal-700 font-semibold">0.000</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$q_1$</div>
+            <div id="gs-q1" class="font-mono-code text-blue-700 font-semibold">[0.00, 0.00]</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$q_2$</div>
+            <div id="gs-q2" class="font-mono-code text-teal-700 font-semibold">[0.00, 0.00]</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$q_1 \cdot q_2$</div>
+            <div id="gs-dot" class="font-mono-code text-slate-700 font-semibold">0.000000</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div class="text-[0.68rem] uppercase tracking-wider text-slate-400 mb-0.5">$Q^TQ$</div>
+            <div id="gs-qtq" class="font-mono-code text-slate-700 font-semibold text-[0.68rem] leading-snug">[[1, 0], [0, 1]]</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-4 font-sans-ui">
+          <button type="button" id="gs-reset" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition shadow-sm">Reset</button>
+          <button type="button" id="gs-nearly" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition">Nearly parallel</button>
+          <button type="button" id="gs-orthogonal" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition">Already orthogonal</button>
+        </div>
+        <div class="flex flex-wrap gap-4 mt-3 font-sans-ui text-xs text-slate-500">
+          <div><span class="legend-dot bg-blue-600"></span>$a$ / $q_1$</div>
+          <div><span class="legend-dot bg-rose-500"></span>$b$</div>
+          <div><span class="legend-dot bg-amber-500"></span>$p$</div>
+          <div><span class="legend-dot bg-teal-600"></span>$B$ / $q_2$</div>
+        </div>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">4.4 Span Invariance: Gram&ndash;Schmidt Never Leaves the Subspace</h3>
+
+      <p class="mb-3">
+        At every step, the orthonormal vectors span exactly the same subspace as the original vectors:
+      </p>
+
+      <div class="math-block">
+        $$\operatorname{span}\{q_1, \ldots, q_k\} = \operatorname{span}\{a_1, \ldots, a_k\},
+        \qquad k = 1, 2, \ldots, n.$$
+      </div>
+
+      <p class="mb-3">
+        The proof is induction. $q_1$ is a scalar multiple of $a_1$. If $q_1, \ldots, q_{k-1}$ span the same space as $a_1, \ldots, a_{k-1}$, then $A_k = a_k - \sum (q_i^Ta_k)q_i$ is a combination of $a_k$ and earlier vectors, so $q_k$ lies in the original span. Conversely, $a_k$ can be recovered from $A_k$ and the earlier $q_i$'s, so no direction is lost.
+      </p>
+
+      <div class="olah-callout-teal">
+        <div class="font-sans-ui text-sm font-semibold text-teal-900 mb-1">&#128200; Geometric picture</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          Gram&ndash;Schmidt does not rotate the subspace or move it through space. It only changes the <em>basis</em> inside the same subspace, replacing oblique coordinates with perpendicular ones. In the worked example, the plane spanned by $a$ and $b$ is identical to the plane spanned by $q_1$ and $q_2$.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">4.5 What Happens When a Vector Is Dependent?</h3>
+
+      <p class="mb-3">
+        If $a_k$ already lies in the span of the previous vectors, its residual $A_k$ is zero. The normalization step divides by zero, so the algorithm must detect this and skip the vector. In exact arithmetic, the test is simply $\|A_k\| = 0$; in floating point, we use a tolerance.
+      </p>
+
+      <div class="olah-callout-amber">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#9888; Rank-deficient input</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          If Gram&ndash;Schmidt produces fewer than $n$ nonzero vectors, the original columns were linearly dependent. The resulting $Q$ still has orthonormal columns, but $R$ will have a zero on the diagonal and cannot be inverted. For a rank-revealing factorization, use QR with column pivoting or the SVD.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 5 - A = QR                                               -->
+    <!-- ================================================================ -->
+    <section id="sec-5" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">5</span>
+        The Matrix Form of Gram&ndash;Schmidt: $A = QR$
+      </h2>
+
+      <p class="mb-4">
+        Just as Gaussian elimination records its row operations in the factorization $A = LU$, Gram&ndash;Schmidt records its projection coefficients in the factorization $A = QR$. The difference is that $Q$ is orthogonal, which is a much stronger and more useful property than $L$ being triangular.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">5.1 Shapes and the Upper-Triangular Structure</h3>
+
+      <p class="mb-3">
+        Let $A = [a_1\ a_2\ \cdots\ a_n]$ be an $m \times n$ matrix with independent columns. Gram&ndash;Schmidt produces an $m \times n$ matrix $Q$ with orthonormal columns and an $n \times n$ upper-triangular matrix $R$ with positive diagonal entries such that
+      </p>
+
+      <div class="math-block-teal">
+        $$\boxed{A = QR.}$$
+      </div>
+
+      <ul class="list-disc ml-6 space-y-2 mb-4">
+        <li>$Q$ is $m \times n$ and satisfies $Q^TQ = I_n$.</li>
+        <li>$R$ is $n \times n$ and upper triangular: $r_{ij} = 0$ whenever $i \gt j$.</li>
+        <li>The diagonal entries are the lengths produced during Gram&ndash;Schmidt: $r_{jj} = \|A_j\| \gt 0$.</li>
+      </ul>
+
+      <p class="mb-3">
+        To find $R$ explicitly, multiply $A = QR$ on the left by $Q^T$ and use $Q^TQ = I$:
+      </p>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">The Formula for $R$</div>
+        $$Q^TA = Q^TQR = IR = R,$$
+        $$\boxed{R = Q^TA.}$$
+      </div>
+
+      <p class="mb-4">
+        This is the matrix version of the observation that in an orthonormal basis, coefficients are dot products. Entry $r_{ij}$ is exactly $q_i^Ta_j$.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.2 Why $R$ Is Upper Triangular</h3>
+
+      <p class="mb-3">
+        For two columns ($n = 2$), expanding $R = Q^TA$ row by column gives
+      </p>
+
+      <div class="math-block">
+        $$\begin{bmatrix}
+        | & | \\
+        a_1 & a_2 \\
+        | & |
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        | & | \\
+        q_1 & q_2 \\
+        | & |
+        \end{bmatrix}
+        \begin{bmatrix}
+        q_1^Ta_1 & q_1^Ta_2 \\
+        q_2^Ta_1 & q_2^Ta_2
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        | & | \\
+        q_1 & q_2 \\
+        | & |
+        \end{bmatrix}
+        \begin{bmatrix}
+        q_1^Ta_1 & q_1^Ta_2 \\
+        0 & q_2^Ta_2
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        Why is the lower-left entry $r_{21} = q_2^Ta_1 = 0$? Because $q_2$ was constructed to be perpendicular to $a_1$. More generally, for $i \gt j$, the vector $q_i$ is perpendicular to every earlier $a_j$, so $r_{ij} = q_i^Ta_j = 0$.
+      </p>
+
+      <p class="mb-4">
+        Equivalently, each column $a_j$ depends only on $q_1, \ldots, q_j$:
+      </p>
+
+      <div class="math-block">
+        $$a_1 = (q_1^Ta_1)q_1 = \|A\|q_1,$$
+        $$a_2 = (q_1^Ta_2)q_1 + (q_2^Ta_2)q_2,$$
+        $$a_3 = (q_1^Ta_3)q_1 + (q_2^Ta_3)q_2 + (q_3^Ta_3)q_3.$$
+      </div>
+
+      <p class="mb-4">
+        This is the &ldquo;recipe&rdquo; interpretation of $R$: the $j$-th column of $R$ tells you how to rebuild $a_j$ from the orthonormal directions $q_1, \ldots, q_j$. Entries above the diagonal are projection amounts; diagonal entries are lengths.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.3 Completing the Worked Example</h3>
+
+      <p class="mb-3">
+        Continue the example from Section 4, where
+      </p>
+
+      <div class="math-block">
+        $$Q = \begin{bmatrix}
+        1/\sqrt{3} & 0 \\
+        1/\sqrt{3} & -1/\sqrt{2} \\
+        1/\sqrt{3} & 1/\sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        Compute $R = Q^TA$:
+      </p>
+
+      <div class="math-block">
+        $$R = \begin{bmatrix}
+        1/\sqrt{3} & 1/\sqrt{3} & 1/\sqrt{3} \\
+        0 & -1/\sqrt{2} & 1/\sqrt{2}
+        \end{bmatrix}
+        \begin{bmatrix}
+        1 & 1 \\
+        1 & 0 \\
+        1 & 2
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        3/\sqrt{3} & 3/\sqrt{3} \\
+        0 & 2/\sqrt{2}
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        \sqrt{3} & \sqrt{3} \\
+        0 & \sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        The diagonal entries are exactly the lengths $\|A\| = \sqrt{3}$ and $\|B\| = \sqrt{2}$ from Gram&ndash;Schmidt. Multiplying the factors reconstructs $A$:
+      </p>
+
+      <div class="math-block">
+        $$QR =
+        \begin{bmatrix}
+        1/\sqrt{3} & 0 \\
+        1/\sqrt{3} & -1/\sqrt{2} \\
+        1/\sqrt{3} & 1/\sqrt{2}
+        \end{bmatrix}
+        \begin{bmatrix}
+        \sqrt{3} & \sqrt{3} \\
+        0 & \sqrt{2}
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        1 & 1 \\
+        1 & 0 \\
+        1 & 2
+        \end{bmatrix}
+        = A.$$
+      </div>
+
+      <!-- Interactive: 3D Gram-Schmidt / QR step-through -->
+      <div class="viz-container" id="qr3d-viz">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="font-sans-ui text-sm font-bold text-slate-700">Interactive: Step Through the 3D Factorization</div>
+          <span class="stat-pill">Drag to orbit</span>
+        </div>
+        <p class="font-sans-ui text-xs text-slate-500 mb-3">
+          The blue plane is $\operatorname{span}\{a, b\}$. Step through the projection and normalization that produce $q_1, q_2$, then compare the final basis with $Q$ and $R$.
+        </p>
+        <div class="flex flex-wrap items-center gap-2 mb-3 font-sans-ui">
+          <button type="button" id="qr3d-prev" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition">&larr; Previous</button>
+          <button type="button" id="qr3d-next" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition shadow-sm">Next &rarr;</button>
+          <button type="button" id="qr3d-reset" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition">Reset view</button>
+          <span id="qr3d-step-label" class="text-xs text-slate-500 font-medium ml-auto">Step 0 of 3</span>
+        </div>
+        <canvas id="qr3d-canvas" class="viz-canvas orbit" height="420"></canvas>
+        <div id="qr3d-desc" class="step-desc text-slate-700"></div>
+        <div class="flex flex-wrap gap-4 mt-3 font-sans-ui text-xs text-slate-500">
+          <div><span class="legend-dot bg-blue-600"></span>$a$ / $A$</div>
+          <div><span class="legend-dot bg-rose-500"></span>$b$</div>
+          <div><span class="legend-dot bg-amber-500"></span>$p = \operatorname{proj}_A(b)$</div>
+          <div><span class="legend-dot bg-teal-600"></span>$B = b - p$</div>
+          <div><span class="legend-dot bg-indigo-800"></span>$q_1, q_2$</div>
+        </div>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.4 Least Squares Without Normal Equations</h3>
+
+      <p class="mb-3">
+        Here is the main computational payoff of $A = QR$. Substitute the factorization into the normal equations:
+      </p>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Simplify $A^TA$</div>
+        $$A^TA = (QR)^T(QR) = R^TQ^TQR = R^TR.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Simplify $A^Tb$</div>
+        $$A^Tb = (QR)^Tb = R^TQ^Tb.$$
+      </div>
+
+      <div class="deriv-step-highlight">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Cancel $R^T$</div>
+        $$R^TR\hat{x} = R^TQ^Tb
+        \quad\Longrightarrow\quad
+        \boxed{R\hat{x} = Q^Tb}.$$
+        <p class="text-[0.95rem] mt-2 mb-0 text-slate-600">
+          Since $A$ has independent columns, $R$ is invertible (its diagonal entries are nonzero), so $R^T$ can be cancelled.
+        </p>
+      </div>
+
+      <p class="mb-4">
+        Instead of forming $A^TA$ and running elimination, we compute the dot products $Q^Tb$ and solve the <strong>upper-triangular system</strong> $R\hat{x} = Q^Tb$ by fast back-substitution. No inverse, no normal equations, and no squaring of the condition number.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.5 Worked Least-Squares Example</h3>
+
+      <p class="mb-3">
+        Use the same $A$ and $QR$ factors as above, with target
+      </p>
+
+      <div class="math-block">
+        $$b = \begin{bmatrix} 3 \\ 0 \\ 3 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        First apply $Q^T$:
+      </p>
+
+      <div class="math-block">
+        $$Q^Tb =
+        \begin{bmatrix}
+        \frac{1}{\sqrt{3}}(3 + 0 + 3) \\[4pt]
+        \frac{1}{\sqrt{2}}(0 - 0 + 3)
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        6/\sqrt{3} \\[2pt]
+        3/\sqrt{2}
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        2\sqrt{3} \\[2pt]
+        3/\sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-3">
+        Now solve $R\hat{x} = Q^Tb$ from the bottom up:
+      </p>
+
+      <div class="math-block">
+        $$\begin{bmatrix}
+        \sqrt{3} & \sqrt{3} \\
+        0 & \sqrt{2}
+        \end{bmatrix}
+        \begin{bmatrix}
+        \hat{x}_1 \\ \hat{x}_2
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        2\sqrt{3} \\
+        3/\sqrt{2}
+        \end{bmatrix}.$$
+      </div>
+
+      <div class="deriv-step">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Back-Substitution</div>
+        $$\sqrt{2}\,\hat{x}_2 = \frac{3}{\sqrt{2}}
+        \quad\Longrightarrow\quad
+        \hat{x}_2 = \frac{3}{2}.$$
+        $$\sqrt{3}\,\hat{x}_1 + \sqrt{3}\left(\frac{3}{2}\right) = 2\sqrt{3}
+        \quad\Longrightarrow\quad
+        \hat{x}_1 = \frac{1}{2}.$$
+      </div>
+
+      <p class="mb-3">
+        The projection is
+      </p>
+
+      <div class="math-block">
+        $$p = A\hat{x} = \frac{1}{2}\begin{bmatrix} 1 \\ 1 \\ 1 \end{bmatrix} + \frac{3}{2}\begin{bmatrix} 1 \\ 0 \\ 2 \end{bmatrix}
+        = \begin{bmatrix} 2 \\ 1/2 \\ 7/2 \end{bmatrix},$$
+      </div>
+
+      <p class="mb-3">
+        and the error is
+      </p>
+
+      <div class="math-block">
+        $$e = b - p = \begin{bmatrix} 1 \\ -1/2 \\ -1/2 \end{bmatrix}.$$
+      </div>
+
+      <p class="mb-4">
+        Check orthogonality: $a_1^Te = 1 - 1/2 - 1/2 = 0$ and $a_2^Te = 1 + 0 - 1 = 0$. The residual is perpendicular to both columns, as the normal equations require.
+      </p>
+
+      <div class="note-check">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#9888; Common Pitfall &mdash; Dot Products Need a Transpose</div>
+        <p class="text-[0.95rem] text-slate-700 mb-0">
+          The entries of $R$ are sometimes written in shorthand as $a_1q_1, a_2q_1, a_1q_2, a_2q_2$. Since $a_j$ and $q_i$ are column vectors, their dot product must be written with a transpose: $q_i^Ta_j$ (or $a_j^Tq_i$). Writing $a_1q_1$ without a transpose is an <em>outer product</em> &mdash; a matrix, not a scalar.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.6 One Subtlety: Signs Are a Convention</h3>
+
+      <p class="mb-3">
+        The factorization $A = QR$ is not unique in its signs. If $D$ is any diagonal matrix with entries $\pm 1$, then
+      </p>
+
+      <div class="math-block">
+        $$A = QR = (QD)(DR) = Q'R'.$$
+      </div>
+
+      <p class="mb-4">
+        Both $(Q, R)$ and $(Q', R')$ are valid factorizations. The standard convention chooses the signs so that the diagonal of $R$ is positive, which is exactly what Gram&ndash;Schmidt produces when it normalizes by a positive length. Numerical libraries sometimes make a different choice: <code class="inline">np.linalg.qr</code> may return negative diagonal entries. This is not an error. When comparing factors across libraries, compare $|R|$ or account for the sign flips.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">5.7 Why QR Is Preferred over Normal Equations</h3>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>Main work</th>
+              <th>Conditioning</th>
+              <th>When to use</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-semibold">Normal equations</td>
+              <td>Form $A^TA$, then solve an $n \times n$ system</td>
+              <td>$\kappa_2(A^TA) = \kappa_2(A)^2$</td>
+              <td>Small, well-conditioned problems; quick derivations</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">QR factorization</td>
+              <td>Orthogonalize $A$, apply $Q^T$, back-substitute</td>
+              <td>$\kappa_2(A)$ &mdash; no squaring</td>
+              <td>General dense least-squares problems</td>
+            </tr>
+            <tr>
+              <td class="font-semibold">SVD</td>
+              <td>Singular value decomposition</td>
+              <td>Most robust; reveals rank</td>
+              <td>Rank-deficient or seriously ill-conditioned problems</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="olah-callout">
+        <div class="font-sans-ui text-sm font-semibold text-blue-900 mb-1">&#129517; The practical rule</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          Use Gram&ndash;Schmidt to <em>understand</em> the geometry. Use Householder QR (or SVD) to <em>compute</em> in production. The hand-written algorithm is clear and instructive; the library implementation is stable and fast.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 6 - IMPLEMENTATION                                       -->
+    <!-- ================================================================ -->
+    <section id="sec-6" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">6</span>
+        Implementation: From the Shared Snippet to a General QR Solver
+      </h2>
+
+      <p class="mb-4">
+        The code you shared is a compact, correct implementation of Gram&ndash;Schmidt for vectors in the plane. It is worth reading line by line, because almost every symbol in it corresponds to a piece of the geometry above. Then we will generalize it in two directions: remove the hard-coded 2D cap, and turn it into a full $A = QR$ least-squares solver.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3">6.1 The Code You Shared</h3>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; your implementation</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+
+def orthonormal_basis(vectors, tol=1e-10):
+    basis = []
+    for v in vectors:
+        v = np.array(v, dtype=float)
+        for b in basis:
+            v = v - np.dot(b, v) * b
+        n = np.linalg.norm(v)
+        if n &gt; tol:
+            basis.append(v / n)
+        if len(basis) == 2:   # 2D space can't have more
+            break
+    return basis</code></pre>
+      </div>
+
+      <p class="mb-4">
+        This is <strong>Modified Gram&ndash;Schmidt</strong> (MGS), not the classical variant. The reason is subtle but important: inside the loop, the dot product <code class="inline">np.dot(b, v)</code> uses the <em>already updated</em> residual <code class="inline">v</code>, not the original input vector. Projecting out one direction before measuring the next is exactly what makes MGS more stable than classical Gram&ndash;Schmidt.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.2 What Each Line Does</h3>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Line / expression</th>
+              <th>Geometric meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="inline">v = np.array(v, dtype=float)</code></td>
+              <td>Copy one input vector into a floating-point array. Copying prevents accidental mutation of the caller&rsquo;s data and makes the arithmetic predictable.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">for b in basis</code></td>
+              <td>Visit every already-normalized basis direction. Each <code class="inline">b</code> has length $1$.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">np.dot(b, v) * b</code></td>
+              <td>Since $\|b\| = 1$, the scalar $b^Tv$ is the signed length of the projection of the current residual onto $b$. Multiplying by $b$ turns that scalar into the projection vector.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">v = v - ...</code></td>
+              <td>Remove that projection. This is the <strong>Gram</strong> step: whatever remains is perpendicular to <code class="inline">b</code>.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">n = np.linalg.norm(v)</code></td>
+              <td>Measure the length of the residual direction. If it is essentially zero, the input vector added no new direction.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">if n &gt; tol</code></td>
+              <td>Accept the direction only if it is numerically nonzero. This is a simple rank test.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">basis.append(v / n)</code></td>
+              <td>Normalize the residual. This is the <strong>Schmidt</strong> step: the new basis vector has unit length.</td>
+            </tr>
+            <tr>
+              <td><code class="inline">if len(basis) == 2: break</code></td>
+              <td>Stop after two basis vectors. Correct for a 2D ambient space, where at most two independent directions exist; too early for 3D or higher.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.3 A Concrete 2D Trace</h3>
+
+      <p class="mb-3">
+        Run the function on <code class="inline">vectors = [[1, 2], [2, 1]]</code>. The arithmetic unfolds as follows:
+      </p>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Input $v$</th>
+              <th>Projection removed</th>
+              <th>Residual after subtraction</th>
+              <th>$\|v\|$</th>
+              <th>Appended $q$</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>$(1, 2)$</td>
+              <td>none &mdash; basis is empty</td>
+              <td>$(1, 2)$</td>
+              <td>$2.2361$</td>
+              <td>$(0.4472,\ 0.8944)$</td>
+            </tr>
+            <tr>
+              <td>$(2, 1)$</td>
+              <td>$1.7889\,q_1 = (0.8000,\ 1.6000)$</td>
+              <td>$(1.2000,\ -0.6000)$</td>
+              <td>$1.3416$</td>
+              <td>$(0.8944,\ -0.4472)$</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; 2D check</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">vectors = [[1, 2], [2, 1]]
+for q in orthonormal_basis(vectors):
+    print(np.round(q, 4))
+
+Q = np.column_stack(orthonormal_basis(vectors))
+print(np.round(Q.T @ Q, 12))</code></pre>
+      </div>
+
+      <div class="output-card">[0.4472 0.8944]
+[0.8944 -0.4472]
+[[ 1. -0.]
+ [-0.  1.]]</div>
+
+      <p class="mb-4">
+        The off-diagonal entries are zero to machine precision, and the diagonal entries are one. The function did exactly what the geometry promised.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.4 The One Line to Generalize</h3>
+
+      <p class="mb-3">
+        The only dimension-dependent line is the hard cap:
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; the 2D assumption</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">if len(basis) == 2:   # 2D space can't have more
+    break</code></pre>
+      </div>
+
+      <p class="mb-3">
+        For 2D input this is not a bug; it is a correct optimization. A 2D space cannot contain more than two independent directions, so once two orthonormal vectors are found, no further work can change the basis. But if you pass three independent vectors in $\mathbb{R}^3$, the function silently stops early:
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; the 3D truncation</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">three_d = [[1, 1, 1], [1, 0, 2], [0, 1, 0]]
+basis = orthonormal_basis(three_d)
+print(len(basis))   # prints 2, not 3</code></pre>
+      </div>
+
+      <div class="output-card">2</div>
+
+      <p class="mb-3">
+        Those three vectors are linearly independent (their determinant is nonzero), so a full basis of $\mathbb{R}^3$ should contain three vectors. The function returns only the first two because of the hard cap. The third direction is real; the code simply never looks for it.
+      </p>
+
+      <div class="olah-callout-amber">
+        <div class="font-sans-ui text-sm font-semibold text-amber-900 mb-1">&#128295; Two clean fixes</div>
+        <ol class="list-decimal ml-5 text-[0.95rem] text-slate-700 space-y-2 mb-0">
+          <li>
+            <strong>Stop at the ambient dimension</strong> instead of at 2:
+            <code class="inline">if len(basis) == len(v): break</code>. Since <code class="inline">v</code> is a length-3 array in 3D, the loop now stops only when the basis is full.
+          </li>
+          <li>
+            <strong>Make the cap explicit</strong> with a parameter:
+            <code class="inline">def orthonormal_basis(vectors, tol=1e-10, max_dim=None)</code>, then break only when <code class="inline">max_dim is not None and len(basis) == max_dim</code>. Call it with <code class="inline">max_dim=2</code> when you specifically want a plane, and omit it otherwise.
+          </li>
+        </ol>
+      </div>
+
+      <p class="mb-4">
+        The second option is better API design: the caller&rsquo;s intent is visible at the call site, and the function no longer silently assumes a dimension.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.5 A General Implementation with Reorthogonalization</h3>
+
+      <p class="mb-3">
+        Here is the same algorithm, generalized and hardened. It adds input-shape checks, an optional dimension cap, and a second orthogonalization pass. The second pass is cheap insurance against the loss of orthogonality that can occur when vectors are nearly dependent.
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; general orthonormal_basis</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">import numpy as np
+
+def orthonormal_basis(vectors, tol=1e-10, max_dim=None):
+    """
+    Return an orthonormal basis for the span of `vectors`.
+
+    Parameters
+    ----------
+    vectors : sequence of 1-D array-like
+        Input vectors, all of the same length.
+    tol : float
+        Residual norm below which a vector is treated as dependent.
+    max_dim : int or None
+        Optional cap on the number of basis vectors. None means
+        "use the ambient dimension" (the length of each vector).
+    """
+    vectors = [np.asarray(v, dtype=float) for v in vectors]
+    if not vectors:
+        return []
+
+    dim = vectors[0].shape[0]
+    basis = []
+
+    for v in vectors:
+        if v.shape != (dim,):
+            raise ValueError(
+                "All vectors must be 1-D and have the same length."
+            )
+
+        v = v.copy()
+
+        # Modified Gram-Schmidt with one reorthogonalization pass.
+        # "Twice is enough" for orthogonality to machine precision.
+        for _ in range(2):
+            for b in basis:
+                v -= np.dot(b, v) * b
+
+        n = np.linalg.norm(v)
+        if n &gt; tol:
+            basis.append(v / n)
+
+        limit = max_dim if max_dim is not None else dim
+        if len(basis) == limit:
+            break
+
+    return basis</code></pre>
+      </div>
+
+      <p class="mb-3">
+        The only geometric change from your original is the second pass over <code class="inline">basis</code>. Everything else is defensive engineering: checking shapes, documenting the tolerance, and replacing the magic number 2 with a caller-controlled limit.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.6 Full Gram&ndash;Schmidt: Returning $Q$ and $R$</h3>
+
+      <p class="mb-3">
+        The standalone basis function answers &ldquo;what is $Q$?&rdquo; For least squares, we also need $R$. The following function performs Modified Gram&ndash;Schmidt on the columns of a matrix, accumulates the projection coefficients in $R$, and optionally reorthogonalizes.
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; gram_schmidt(A) -&gt; Q, R</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">def gram_schmidt(A, tol=1e-12, reorthogonalize=True):
+    """
+    Modified Gram-Schmidt for an m x n matrix A with independent columns.
+
+    Returns
+    -------
+    Q : (m, n) ndarray with orthonormal columns
+    R : (n, n) upper-triangular ndarray such that A = Q @ R
+    """
+    A = np.asarray(A, dtype=float)
+    if A.ndim != 2:
+        raise ValueError("A must be a 2-D matrix.")
+
+    m, n = A.shape
+    Q = np.zeros((m, n))
+    R = np.zeros((n, n))
+
+    for j in range(n):
+        v = A[:, j].copy()
+
+        # Modified Gram-Schmidt: update v before the next projection.
+        for i in range(j):
+            R[i, j] = Q[:, i] @ v
+            v -= R[i, j] * Q[:, i]
+
+        # Optional second pass: "twice is enough" for orthogonality.
+        if reorthogonalize:
+            for i in range(j):
+                correction = Q[:, i] @ v
+                R[i, j] += correction
+                v -= correction * Q[:, i]
+
+        R[j, j] = np.linalg.norm(v)
+        if R[j, j] &lt;= tol:
+            raise ValueError(
+                f"Column {j} is linearly dependent on the previous columns."
+            )
+        Q[:, j] = v / R[j, j]
+
+    return Q, R</code></pre>
+      </div>
+
+      <p class="mb-3">
+        Why does <code class="inline">R[i, j] += correction</code> in the second pass? The entry $r_{ij}$ must equal $q_i^Ta_j$, including the small component that the first pass missed. The correction is the missing amount, so it is added to the coefficient as well as subtracted from the residual.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.7 Least Squares by Back-Substitution</h3>
+
+      <p class="mb-3">
+        Once $Q$ and $R$ are available, solving $R\hat{x} = Q^Tb$ is a short loop. Back-substitution starts at the last row, where there is only one unknown, and works upward.
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; qr_least_squares(A, b)</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">def qr_least_squares(A, b):
+    """Solve min ||Ax - b||_2 using A = QR and back-substitution."""
+    A = np.asarray(A, dtype=float)
+    b = np.asarray(b, dtype=float)
+
+    Q, R = gram_schmidt(A)
+    y = Q.T @ b
+    n = R.shape[1]
+    x = np.zeros(n)
+
+    for i in range(n - 1, -1, -1):
+        x[i] = (y[i] - R[i, i + 1:] @ x[i + 1:]) / R[i, i]
+
+    return x</code></pre>
+      </div>
+
+      <p class="mb-3">
+        For a $2 \times 2$ upper-triangular system, the loop does exactly what we did by hand in Section 5: solve the second row first, then substitute that value into the first row.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.8 Running the Whole Pipeline</h3>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; lecture example</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python">if __name__ == "__main__":
+    A = np.array([[1.0, 1.0],
+                  [1.0, 0.0],
+                  [1.0, 2.0]])
+
+    Q, R = gram_schmidt(A)
+    print("Q =\n", np.round(Q, 4))
+    print("R =\n", np.round(R, 4))
+    print("Q^T Q =\n", np.round(Q.T @ Q, 12))
+    print("Q R =\n", np.round(Q @ R, 12))
+
+    b = np.array([3.0, 0.0, 3.0])
+    x_hat = qr_least_squares(A, b)
+    print("x_hat =", x_hat)
+    print("p =", A @ x_hat)
+    print("e =", b - A @ x_hat)</code></pre>
+      </div>
+
+      <div class="output-card">Q =
+ [[ 0.5774  0.    ]
+  [ 0.5774 -0.7071]
+  [ 0.5774  0.7071]]
+R =
+ [[1.7321 1.7321]
+  [0.     1.4142]]
+Q^T Q =
+ [[ 1. -0.]
+  [-0.  1.]]
+Q R =
+ [[ 1.  1.]
+  [ 1.  0.]
+  [ 1.  2.]]
+x_hat = [0.5 1.5]
+p = [2.  0.5 3.5]
+e = [ 1.  -0.5 -0.5]</div>
+
+      <p class="mb-4">
+        The output matches the hand calculations exactly: $Q^TQ = I$, $QR = A$, $\hat{x} = (1/2, 3/2)$, $p = (2, 1/2, 7/2)$, and $e = (1, -1/2, -1/2)$.
+      </p>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.9 Numerical Stability: What the Snippet Does Not Tell You</h3>
+
+      <p class="mb-3">
+        The implementation is mathematically correct, but floating-point arithmetic introduces three practical concerns.
+      </p>
+
+      <div class="grid grid-cols-1 gap-4 my-6">
+        <div class="olah-callout-teal">
+          <div class="font-sans-ui text-sm font-bold text-teal-900 mb-2">1. MGS is better than classical GS &mdash; but not perfect</div>
+          <p class="text-[0.94rem] text-slate-700 mb-0">
+            Classical Gram&ndash;Schmidt computes all projection coefficients from the original vector. Modified Gram&ndash;Schmidt, which your snippet uses, updates the residual after each projection. A useful rule of thumb is that classical GS can lose orthogonality like $\kappa(A)^2\varepsilon$, while MGS behaves like $\kappa(A)\varepsilon$. A second pass (reorthogonalization) restores orthogonality to machine precision for most problems.
+          </p>
+        </div>
+        <div class="olah-callout-amber">
+          <div class="font-sans-ui text-sm font-bold text-amber-900 mb-2">2. The tolerance should be relative, not absolute</div>
+          <p class="text-[0.94rem] text-slate-700 mb-0">
+            A fixed <code class="inline">tol=1e-10</code> is an absolute threshold. If your vectors are scaled by $10^{12}$, a residual of $10^{-9}$ may be meaningful; if they are scaled by $10^{-12}$, even a genuine direction can fall below the threshold. Prefer a threshold proportional to the input scale, such as <code class="inline">tol * np.linalg.norm(A[:, j])</code>, or use <code class="inline">np.finfo(float).eps</code> with a dimension-dependent factor.
+          </p>
+        </div>
+        <div class="olah-callout-rose">
+          <div class="font-sans-ui text-sm font-bold text-rose-900 mb-2">3. Nearly dependent columns require pivoting or SVD</div>
+          <p class="text-[0.94rem] text-slate-700 mb-0">
+            If two columns are almost parallel, $R$ has a tiny diagonal entry and the computed $Q$ can be inaccurate. Plain Gram&ndash;Schmidt cannot fix this; it has no mechanism to reorder the columns. Use QR with column pivoting (<code class="inline">scipy.linalg.qr(..., pivoting=True)</code>) to reveal rank, or use the SVD, which is the most robust option for rank-deficient least squares.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.10 Production One-Liners</h3>
+
+      <p class="mb-3">
+        In real code, do not hand-roll Gram&ndash;Schmidt unless you have a specific reason. LAPACK&rsquo;s Householder QR is backward stable and faster:
+      </p>
+
+      <div class="code-card">
+        <div class="code-head">
+          <span>python &middot; production replacements</span>
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+        </div>
+        <pre><code class="language-python"># Reduced QR: Q is m x n, R is n x n
+Q_np, R_np = np.linalg.qr(A, mode="reduced")
+
+# Least squares directly (SVD-based, robust for rank-deficient A)
+x_np = np.linalg.lstsq(A, b, rcond=None)[0]
+
+# Rank-revealing QR, if you need the rank and column order
+# from scipy.linalg import qr
+# Q_p, R_p, piv = qr(A, mode="economic", pivoting=True)</code></pre>
+      </div>
+
+      <div class="olah-callout">
+        <div class="font-sans-ui text-sm font-semibold text-blue-900 mb-1">&#9888; Sign convention, again</div>
+        <p class="text-[0.98rem] text-slate-700 mb-0">
+          NumPy&rsquo;s QR may return $Q$ and $R$ with sign flips relative to Gram&ndash;Schmidt. Both satisfy $A = QR$. Compare <code class="inline">np.abs(Q)</code> and <code class="inline">np.abs(R)</code>, or reconstruct $A$ and compare that, rather than expecting element-by-element agreement.
+        </p>
+      </div>
+
+      <h3 class="font-sans-ui text-lg font-semibold text-slate-800 mb-3 mt-8">6.11 Cost Summary</h3>
+
+      <div class="overflow-x-auto my-6">
+        <table class="olah-table">
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Time</th>
+              <th>Memory</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="inline">orthonormal_basis</code> on $k$ vectors in $\mathbb{R}^m$</td>
+              <td>$O(km^2)$ worst case</td>
+              <td>$O(m^2)$ for the basis</td>
+              <td>Each new vector is projected against the existing basis</td>
+            </tr>
+            <tr>
+              <td><code class="inline">gram_schmidt(A)</code> for $m \times n$</td>
+              <td>$O(mn^2)$</td>
+              <td>$O(mn + n^2)$</td>
+              <td>MGS plus optional reorthogonalization</td>
+            </tr>
+            <tr>
+              <td>Householder QR via <code class="inline">np.linalg.qr</code></td>
+              <td>$O(mn^2)$</td>
+              <td>$O(mn + n^2)$</td>
+              <td>Backward stable; preferred in practice</td>
+            </tr>
+            <tr>
+              <td>Back-substitution for $R\hat{x} = Q^Tb$</td>
+              <td>$O(n^2)$</td>
+              <td>$O(n)$ extra</td>
+              <td>The cheap final step after factorization</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 7 - PRACTICE                                             -->
+    <!-- ================================================================ -->
+    <section id="sec-7" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">7</span>
+        Practice Problems
+      </h2>
+
+      <p class="mb-4">
+        Work these with pencil and paper first. The answers reveal the full computation, not just the final numbers.
+      </p>
+
+      <!-- Problem 1 -->
+      <div class="practice-card" id="p1">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">Problem 1 &mdash; Projection Without an Inverse</div>
+        <p class="mb-4">
+          Let
+          $$Q = \frac{1}{3}\begin{bmatrix} 1 & -2 \\ 2 & -1 \\ 2 & 2 \end{bmatrix},
+          \qquad
+          b = \begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix}.$$
+          (a) Verify that $Q^TQ = I_2$. (b) Compute the projection $p = QQ^Tb$ using dot products only. (c) Compute $e = b - p$ and verify $Q^Te = 0$. (d) Why is $QQ^T \ne I_3$?
+        </p>
+        <div class="flex gap-2 mb-3 font-sans-ui">
+          <button type="button" onclick="toggleHint('p1')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium transition">Show Hint</button>
+          <button type="button" onclick="toggleAnswer('p1')" class="text-xs px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition shadow-sm">Show Answer</button>
+        </div>
+        <div class="hint-reveal" id="p1-hint">
+          <div class="olah-callout-amber text-[0.92rem]">
+            <strong>Hint:</strong> The columns of $Q$ are unit length and perpendicular, so $Q^TQ = I_2$. For (b), first compute the two coefficients $q_1^Tb$ and $q_2^Tb$, then add the corresponding one-dimensional projections.
+          </div>
+        </div>
+        <div class="answer-reveal" id="p1-answer">
+          <div class="olah-callout-teal text-[0.95rem]">
+            <p class="mb-2"><strong>Solution:</strong></p>
+            <p>Each column has length $1$: $\|q_1\|^2 = (1+4+4)/9 = 1$ and $\|q_2\|^2 = (4+1+4)/9 = 1$. Their dot product is $(1)(-2) + (2)(-1) + (2)(2) = -2 - 2 + 4 = 0$, all divided by $9$. Hence $Q^TQ = I_2$.</p>
+            <p>The coefficients are
+              $$q_1^Tb = \frac{1 + 4 + 6}{3} = \frac{11}{3}, \qquad q_2^Tb = \frac{-2 - 2 + 6}{3} = \frac{2}{3}.$$
+            </p>
+            <p>Therefore
+              $$p = \frac{11}{9}\begin{bmatrix}1\\2\\2\end{bmatrix} + \frac{2}{9}\begin{bmatrix}-2\\-1\\2\end{bmatrix}
+              = \begin{bmatrix}7/9\\20/9\\26/9\end{bmatrix}.$$
+            </p>
+            <p>The error is $e = b - p = (2/9, -2/9, 1/9)^T$, and $Q^Te = (0,0)^T$ because both columns are orthogonal to $e$.</p>
+            <p class="mb-0">$QQ^T$ is $3 \times 3$ with rank $2$: it projects onto the plane spanned by the two columns. A rank-$2$ matrix cannot equal $I_3$, which has rank $3$.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem 2 -->
+      <div class="practice-card" id="p2">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">Problem 2 &mdash; Gram&ndash;Schmidt and $QR$</div>
+        <p class="mb-4">
+          Apply Gram&ndash;Schmidt to
+          $$a = \begin{bmatrix} 1 \\ 2 \\ 2 \end{bmatrix},
+          \qquad
+          b = \begin{bmatrix} 2 \\ 1 \\ 0 \end{bmatrix}.$$
+          Find $Q$, $R$, and verify $QR = A$ where $A = [a\ b]$. What are the diagonal entries of $R$ geometrically?
+        </p>
+        <div class="flex gap-2 mb-3 font-sans-ui">
+          <button type="button" onclick="toggleHint('p2')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium transition">Show Hint</button>
+          <button type="button" onclick="toggleAnswer('p2')" class="text-xs px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition shadow-sm">Show Answer</button>
+        </div>
+        <div class="hint-reveal" id="p2-hint">
+          <div class="olah-callout-amber text-[0.92rem]">
+            <strong>Hint:</strong> $\|a\| = 3$, so $q_1 = a/3$. Then subtract $(q_1^Tb)q_1$ from $b$ and normalize. The diagonal of $R$ should contain $\|a\|$ and the length of the residual.
+          </div>
+        </div>
+        <div class="answer-reveal" id="p2-answer">
+          <div class="olah-callout-teal text-[0.95rem]">
+            <p class="mb-2"><strong>Solution:</strong></p>
+            <p>$\|a\| = \sqrt{1+4+4} = 3$, so $q_1 = (1/3, 2/3, 2/3)^T$.</p>
+            <p>The projection coefficient is $q_1^Tb = (2 + 2 + 0)/3 = 4/3$, so the residual is
+              $$B = b - \frac{4}{3}q_1 = \begin{bmatrix}2\\1\\0\end{bmatrix} - \begin{bmatrix}4/9\\8/9\\8/9\end{bmatrix}
+              = \begin{bmatrix}14/9\\1/9\\-8/9\end{bmatrix}.$$
+            </p>
+            <p>Its norm is $\|B\| = \sqrt{196+1+64}/9 = \sqrt{261}/9 = \sqrt{29}/3$, hence
+              $$q_2 = \frac{B}{\|B\|} = \frac{1}{3\sqrt{29}}\begin{bmatrix}14\\1\\-8\end{bmatrix}.$$
+            </p>
+            <p>For $R = Q^TA$: $r_{11} = q_1^Ta = 3$, $r_{12} = q_1^Tb = 4/3$, $r_{21} = 0$, and $r_{22} = q_2^Tb = \sqrt{29}/3$. Thus
+              $$R = \begin{bmatrix}3 & 4/3\\ 0 & \sqrt{29}/3\end{bmatrix}.$$
+            </p>
+            <p>Reconstruction: $3q_1 = a$, and $(4/3)q_1 + (\sqrt{29}/3)q_2 = b$. The diagonal entries are the lengths of the successive orthogonal residuals: $\|a\| = 3$ and $\|B\| = \sqrt{29}/3$.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem 3 -->
+      <div class="practice-card" id="p3">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">Problem 3 &mdash; Least Squares with $R\hat{x} = Q^Tb$</div>
+        <p class="mb-4">
+          Use
+          $$A = \begin{bmatrix}1 & 1\\1 & 0\\1 & 2\end{bmatrix},
+          \qquad
+          b = \begin{bmatrix}2\\1\\0\end{bmatrix}.$$
+          The QR factors are $Q = \begin{bmatrix}1/\sqrt3 & 0\\1/\sqrt3 & -1/\sqrt2\\1/\sqrt3 & 1/\sqrt2\end{bmatrix}$ and $R = \begin{bmatrix}\sqrt3 & \sqrt3\\0 & \sqrt2\end{bmatrix}$. Solve $R\hat{x} = Q^Tb$ by back-substitution, then find the projection $p = A\hat{x}$ and the error $e = b - p$.
+        </p>
+        <div class="flex gap-2 mb-3 font-sans-ui">
+          <button type="button" onclick="toggleHint('p3')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium transition">Show Hint</button>
+          <button type="button" onclick="toggleAnswer('p3')" class="text-xs px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition shadow-sm">Show Answer</button>
+        </div>
+        <div class="hint-reveal" id="p3-hint">
+          <div class="olah-callout-amber text-[0.92rem]">
+            <strong>Hint:</strong> Compute $Q^Tb$ first. Then solve the second row for $\hat{x}_2$ and substitute upward.
+          </div>
+        </div>
+        <div class="answer-reveal" id="p3-answer">
+          <div class="olah-callout-teal text-[0.95rem]">
+            <p class="mb-2"><strong>Solution:</strong></p>
+            <p>$$Q^Tb = \begin{bmatrix}\frac{1}{\sqrt3}(2+1+0)\\ \frac{1}{\sqrt2}(0 - 1 + 0)\end{bmatrix} = \begin{bmatrix}\sqrt3\\ -1/\sqrt2\end{bmatrix}.$$</p>
+            <p>Back-substitution:
+              $$\sqrt2\,\hat{x}_2 = -\frac{1}{\sqrt2} \Rightarrow \hat{x}_2 = -\frac12,$$
+              $$\sqrt3\,\hat{x}_1 + \sqrt3\left(-\frac12\right) = \sqrt3 \Rightarrow \hat{x}_1 = \frac32.$$
+            </p>
+            <p>So $\hat{x} = (3/2, -1/2)^T$. The projection is
+              $$p = \frac32\begin{bmatrix}1\\1\\1\end{bmatrix} - \frac12\begin{bmatrix}1\\0\\2\end{bmatrix} = \begin{bmatrix}1\\3/2\\1/2\end{bmatrix},$$
+              and the error is $e = b - p = (1, -1/2, -1/2)^T$.
+            </p>
+            <p class="mb-0">Check: $a_1^Te = 1 - 1/2 - 1/2 = 0$ and $a_2^Te = 1 + 0 - 1 = 0$, so the residual is perpendicular to both columns.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem 4 -->
+      <div class="practice-card" id="p4">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">Problem 4 &mdash; Debug the 2D Cap</div>
+        <p class="mb-4">
+          A colleague runs your function on
+          <code class="inline">[[1, 1, 1], [1, 0, 2], [0, 1, 0]]</code> and gets only two basis vectors, even though the three input vectors are independent. Explain exactly which line causes the problem, and write two different fixes.
+        </p>
+        <div class="flex gap-2 mb-3 font-sans-ui">
+          <button type="button" onclick="toggleHint('p4')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium transition">Show Hint</button>
+          <button type="button" onclick="toggleAnswer('p4')" class="text-xs px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition shadow-sm">Show Answer</button>
+        </div>
+        <div class="hint-reveal" id="p4-hint">
+          <div class="olah-callout-amber text-[0.92rem]">
+            <strong>Hint:</strong> The cap is <code class="inline">if len(basis) == 2: break</code>. The number 2 is the ambient dimension for 2D vectors, but not for 3D vectors. Replace it with the actual length of a vector, or expose a <code class="inline">max_dim</code> parameter.
+          </div>
+        </div>
+        <div class="answer-reveal" id="p4-answer">
+          <div class="olah-callout-teal text-[0.95rem]">
+            <p class="mb-2"><strong>Solution:</strong></p>
+            <p>The offending line is the hard-coded cap <code class="inline">if len(basis) == 2: break</code>. In $\mathbb{R}^3$, a basis can contain three vectors, so the loop stops one direction too early.</p>
+            <p><strong>Fix 1 &mdash; ambient dimension:</strong></p>
+            <div class="code-card my-3">
+              <div class="code-head"><span>python</span></div>
+              <pre><code class="language-python">if len(basis) == len(v):
+    break</code></pre>
+            </div>
+            <p><strong>Fix 2 &mdash; explicit cap:</strong></p>
+            <div class="code-card my-3">
+              <div class="code-head"><span>python</span></div>
+              <pre><code class="language-python">def orthonormal_basis(vectors, tol=1e-10, max_dim=None):
+    # ...
+    if max_dim is not None and len(basis) == max_dim:
+        break</code></pre>
+            </div>
+            <p class="mb-0">With either fix, the three vectors produce a full basis. One valid result is $q_1 = (1,1,1)^T/\sqrt3$, $q_2 = (0,-1,1)^T/\sqrt2$, and $q_3 = (-2,1,1)^T/\sqrt6$.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem 5 -->
+      <div class="practice-card" id="p5">
+        <div class="font-sans-ui text-xs font-bold uppercase tracking-wider text-teal-800 mb-2">Problem 5 &mdash; Shapes and Ranks</div>
+        <p class="mb-4">
+          Suppose $Q$ is $5 \times 3$ with orthonormal columns. What are the shapes of $Q^TQ$ and $QQ^T$? Which one is the identity? What is the rank of $QQ^T$? Is $QQ^T$ invertible? What are its eigenvalues?
+        </p>
+        <div class="flex gap-2 mb-3 font-sans-ui">
+          <button type="button" onclick="toggleHint('p5')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium transition">Show Hint</button>
+          <button type="button" onclick="toggleAnswer('p5')" class="text-xs px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition shadow-sm">Show Answer</button>
+        </div>
+        <div class="hint-reveal" id="p5-hint">
+          <div class="olah-callout-amber text-[0.92rem]">
+            <strong>Hint:</strong> A product of an $n \times m$ matrix and an $m \times n$ matrix is $n \times n$; the reverse order is $m \times m$. A projection matrix has eigenvalues $1$ on its column space and $0$ on its orthogonal complement.
+          </div>
+        </div>
+        <div class="answer-reveal" id="p5-answer">
+          <div class="olah-callout-teal text-[0.95rem]">
+            <p class="mb-2"><strong>Solution:</strong></p>
+            <ul class="list-disc ml-5 space-y-1 mb-0">
+              <li>$Q^TQ$ is $3 \times 3$ and equals $I_3$ because the three columns are orthonormal.</li>
+              <li>$QQ^T$ is $5 \times 5$. It is not the identity; it is the orthogonal projection onto the 3-dimensional column space of $Q$.</li>
+              <li>$\operatorname{rank}(QQ^T) = 3$. It has three eigenvalues equal to $1$ (on $\mathcal{C}(Q)$) and two eigenvalues equal to $0$ (on the 2-dimensional orthogonal complement).</li>
+              <li>Because it has zero eigenvalues, $QQ^T$ is singular and not invertible. Its trace is $3$, matching the rank.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 8 - TAKEAWAYS                                            -->
+    <!-- ================================================================ -->
+    <section id="sec-8" class="mb-14 scroll-mt-20">
+      <h2 class="font-sans-ui text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold">8</span>
+        Key Takeaways
+      </h2>
+
+      <div class="olah-callout" style="border-left: 4px solid #2b6cb0;">
+        <ol class="list-decimal ml-5 space-y-3 text-[1rem] text-slate-800">
+          <li>
+            <strong>Orthonormal means $Q^TQ = I$.</strong> The columns are unit length and mutually perpendicular. For a square matrix, this also forces $Q^T = Q^{-1}$ and $QQ^T = I$.
+          </li>
+          <li>
+            <strong>&ldquo;Orthogonal matrix&rdquo; means square.</strong> A rectangular matrix can have orthonormal columns, but then only $Q^TQ$ is the identity; $QQ^T$ is a projection onto the column space.
+          </li>
+          <li>
+            <strong>Orthogonal transformations preserve geometry.</strong> Lengths, dot products, and angles are unchanged, and the condition number is $1$. Orthogonal changes of basis cannot amplify relative error.
+          </li>
+          <li>
+            <strong>In an orthonormal basis, coordinates are dot products.</strong> The least-squares solution is $\hat{x} = Q^Tb$, with $\hat{x}_i = q_i^Tb$. The projection is $QQ^Tb = \sum_i(q_i^Tb)q_i$, and no inverse is needed.
+          </li>
+          <li>
+            <strong>Gram&ndash;Schmidt is greedy and span-preserving.</strong> Keep the first direction, subtract the projection of each new vector onto the previous directions, then normalize. At every step, the new basis spans the same subspace as the original vectors.
+          </li>
+          <li>
+            <strong>$A = QR$ records the process.</strong> $Q$ has orthonormal columns, $R$ is upper triangular with $r_{jj} = \|A_j\|$, and $R = Q^TA$. The diagonal entries are lengths; the off-diagonal entries are projection coefficients.
+          </li>
+          <li>
+            <strong>QR makes least squares stable.</strong> Substitute $A = QR$ into the normal equations to get $R\hat{x} = Q^Tb$, then back-substitute. This avoids forming $A^TA$ and avoids squaring the condition number.
+          </li>
+          <li>
+            <strong>Your snippet is MGS for 2D.</strong> It is mathematically correct and more stable than classical Gram&ndash;Schmidt. Replace the hard-coded <code class="inline">len(basis) == 2</code> with the ambient dimension or an explicit <code class="inline">max_dim</code>; add a second orthogonalization pass and a relative tolerance for production use.
+          </li>
+        </ol>
+      </div>
+
+      <div class="olah-callout-teal">
+        <div class="font-sans-ui text-sm font-semibold text-teal-900 mb-1">&#9989; Implementation checklist</div>
+        <ul class="list-disc ml-5 text-[0.95rem] text-slate-700 space-y-1.5 mb-0">
+          <li>Copy input vectors; do not mutate the caller&rsquo;s arrays.</li>
+          <li>Use Modified Gram&ndash;Schmidt (update the residual before the next dot product).</li>
+          <li>Reorthogonalize once if orthogonality matters.</li>
+          <li>Use a relative tolerance, not a fixed absolute one.</li>
+          <li>Stop at the ambient dimension, or accept an explicit <code class="inline">max_dim</code>.</li>
+          <li>Return $Q$ and $R$ when you need least squares; do not recompute projections.</li>
+          <li>Use <code class="inline">np.linalg.qr</code> or <code class="inline">np.linalg.lstsq</code> in production.</li>
+        </ul>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-[#e5e2dc] font-sans-ui text-sm text-slate-500 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <a href="index.html" class="text-blue-700 hover:underline font-medium">&larr; Linear Algebra notes</a>
+        </div>
+        <div>
+          <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/orthogonal-matrices-and-gram-schmidt/" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline font-medium">MIT OCW 18.06SC &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- References -->
+    <section class="mb-8">
+      <h2 class="font-sans-ui text-sm font-bold uppercase tracking-wider text-slate-700 mb-3 border-b border-[#e5e2dc] pb-2">References &amp; Further Reading</h2>
+      <ol class="list-decimal ml-5 text-[0.9rem] text-slate-600 space-y-2">
+        <li>Gilbert Strang, <em>MIT 18.06 Linear Algebra</em>, Lecture 17: Orthogonal Matrices and Gram&ndash;Schmidt. <a href="https://www.youtube.com/watch?v=0MtwqhIwdrI" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">Video lecture</a>.</li>
+        <li>MIT OpenCourseWare, <em>18.06SC Session 2.4 Summary: Orthogonal Matrices and Gram&ndash;Schmidt</em>. <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/7ac32be444c25e48590f47573833ccc6_MIT18_06SCF11_Ses2.4sum.pdf" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">Course summary</a>.</li>
+        <li>Gilbert Strang, <em>Introduction to Linear Algebra</em>, 5th Edition, Section 4.4: &ldquo;Orthogonal Bases and Gram&ndash;Schmidt,&rdquo; Wellesley-Cambridge Press.</li>
+      </ol>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#e5e2dc] bg-[#faf9f5] py-8 font-sans-ui text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <span class="font-semibold text-slate-600">Linear Algebra</span> &middot; Visual Study Notes
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="index.html" class="hover:text-slate-800 transition">Notes index</a>
+        <a href="https://www.youtube.com/watch?v=0MtwqhIwdrI" target="_blank" rel="noopener noreferrer" class="hover:text-slate-800 transition">Lecture 17</a>
+        <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/orthogonal-matrices-and-gram-schmidt/" target="_blank" rel="noopener noreferrer" class="hover:text-slate-800 transition">MIT OCW 18.06SC</a>
+        <a href="https://github.com/imprashant998/linear-algebra" target="_blank" rel="noopener noreferrer" class="hover:text-slate-800 transition">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ================================================================
+    //  Shared helpers
+    // ================================================================
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const dot2 = (a, b) => a[0] * b[0] + a[1] * b[1];
+    const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const add2 = (a, b) => [a[0] + b[0], a[1] + b[1]];
+    const sub2 = (a, b) => [a[0] - b[0], a[1] - b[1]];
+    const mul2 = (s, a) => [s * a[0], s * a[1]];
+    const norm2 = (a) => Math.hypot(a[0], a[1]);
+
+    function fitCanvas(canvas, cssHeight) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const W = Math.max(280, rect.width || 600);
+      const H = cssHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.height = H + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, W, H };
+    }
+
+    function drawArrow(ctx, x0, y0, x1, y1, color, width, dash) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const len = Math.hypot(dx, dy);
+      if (len < 0.8) return;
+      const ux = dx / len;
+      const uy = dy / len;
+      const head = Math.min(12, Math.max(5, len * 0.26));
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.setLineDash(dash || []);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1 - ux * head * 0.75, y1 - uy * head * 0.75);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - ux * head - uy * head * 0.45, y1 - uy * head + ux * head * 0.45);
+      ctx.lineTo(x1 - ux * head + uy * head * 0.45, y1 - uy * head - ux * head * 0.45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawLabel(ctx, text, x, y, color, align) {
+      ctx.save();
+      ctx.font = '600 12px Inter, sans-serif';
+      ctx.textAlign = align || 'left';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    function drawGrid2D(ctx, W, H, cx, cy, unit) {
+      ctx.save();
+      ctx.strokeStyle = '#eef2f7';
+      ctx.lineWidth = 1;
+      const maxX = Math.ceil(W / unit / 2) + 1;
+      const maxY = Math.ceil(H / unit / 2) + 1;
+      for (let i = -maxX; i <= maxX; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx + i * unit, 0);
+        ctx.lineTo(cx + i * unit, H);
+        ctx.stroke();
+      }
+      for (let j = -maxY; j <= maxY; j++) {
+        ctx.beginPath();
+        ctx.moveTo(0, cy + j * unit);
+        ctx.lineTo(W, cy + j * unit);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, cy);
+      ctx.lineTo(W, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx, 0);
+      ctx.lineTo(cx, H);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise((resolve, reject) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          resolve();
+        } catch (err) {
+          reject(err);
+        } finally {
+          ta.remove();
+        }
+      });
+    }
+
+    // ================================================================
+    //  Page setup
+    // ================================================================
+    function initPage() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+      if (window.Prism) {
+        Prism.highlightAll();
+      }
+
+      document.querySelectorAll('.nav-jump').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.scroll);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      document.querySelectorAll('[data-copy]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('.code-card');
+          const pre = card ? card.querySelector('pre') : null;
+          if (!pre) return;
+          const original = btn.textContent;
+          copyText(pre.innerText).then(() => {
+            btn.textContent = 'Copied';
+            setTimeout(() => { btn.textContent = original; }, 1200);
+          }).catch(() => {
+            btn.textContent = 'Copy failed';
+            setTimeout(() => { btn.textContent = original; }, 1500);
+          });
+        });
+      });
+
+      initRotationViz();
+      initGramSchmidtViz();
+      initQR3DViz();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPage);
+    } else {
+      initPage();
+    }
+
+    // ================================================================
+    //  Practice problem toggles
+    // ================================================================
+    function toggleAnswer(id) {
+      const el = document.getElementById(id + '-answer');
+      if (el) el.classList.toggle('show');
+    }
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      if (el) el.classList.toggle('show');
+    }
+
+    // ================================================================
+    //  Interactive 1: rotation preserves length and angle
+    // ================================================================
+    function initRotationViz() {
+      const canvas = document.getElementById('rotation-canvas');
+      if (!canvas) return;
+      const slider = document.getElementById('rot-slider');
+      const valueEl = document.getElementById('rot-val');
+      const resetBtn = document.getElementById('rot-reset');
+      const normXEl = document.getElementById('rot-norm-x');
+      const normQXEl = document.getElementById('rot-norm-qx');
+      const angleXYEl = document.getElementById('rot-angle-xy');
+      const angleQEl = document.getElementById('rot-angle-q');
+
+      const x = [2.0, 0.9];
+      const y = [-0.5, 2.1];
+      let ctx, W, H, cx, cy, unit;
+
+      function layout() {
+        const fit = fitCanvas(canvas, 300);
+        ctx = fit.ctx;
+        W = fit.W;
+        H = fit.H;
+        unit = Math.min(W / 9, H / 6.4);
+        cx = W / 2;
+        cy = H / 2;
+      }
+
+      function screen(p) {
+        return [cx + p[0] * unit, cy - p[1] * unit];
+      }
+
+      function angleBetween(a, b) {
+        const c = dot2(a, b) / (norm2(a) * norm2(b));
+        return Math.acos(clamp(c, -1, 1)) * 180 / Math.PI;
+      }
+
+      function draw() {
+        const theta = parseFloat(slider.value) * Math.PI / 180;
+        const c = Math.cos(theta);
+        const s = Math.sin(theta);
+        const Qx = [c * x[0] - s * x[1], s * x[0] + c * x[1]];
+        const Qy = [c * y[0] - s * y[1], s * y[0] + c * y[1]];
+
+        if (valueEl) valueEl.textContent = parseFloat(slider.value).toFixed(0) + '\u00B0';
+        if (normXEl) normXEl.textContent = norm2(x).toFixed(4);
+        if (normQXEl) normQXEl.textContent = norm2(Qx).toFixed(4);
+        if (angleXYEl) angleXYEl.textContent = angleBetween(x, y).toFixed(2) + '\u00B0';
+        if (angleQEl) angleQEl.textContent = angleBetween(Qx, Qy).toFixed(2) + '\u00B0';
+
+        ctx.clearRect(0, 0, W, H);
+        drawGrid2D(ctx, W, H, cx, cy, unit);
+
+        // Unit circle
+        ctx.save();
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, unit, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        const ox = screen([0, 0]);
+        const sx = screen(x);
+        const sy = screen(y);
+        const sQx = screen(Qx);
+        const sQy = screen(Qy);
+
+        // Original vectors
+        drawArrow(ctx, ox[0], ox[1], sx[0], sx[1], '#94a3b8', 1.8, [5, 5]);
+        drawArrow(ctx, ox[0], ox[1], sy[0], sy[1], '#94a3b8', 1.8, [5, 5]);
+        drawLabel(ctx, 'x', sx[0] + 8, sx[1] - 8, '#64748b');
+        drawLabel(ctx, 'y', sy[0] + 8, sy[1] - 8, '#64748b');
+
+        // Rotated vectors
+        drawArrow(ctx, ox[0], ox[1], sQx[0], sQx[1], '#2563eb', 2.6);
+        drawArrow(ctx, ox[0], ox[1], sQy[0], sQy[1], '#e11d48', 2.6);
+        drawLabel(ctx, 'Qx', sQx[0] + 8, sQx[1] - 8, '#1d4ed8');
+        drawLabel(ctx, 'Qy', sQy[0] + 8, sQy[1] - 8, '#be123c');
+
+        // Origin dot
+        ctx.fillStyle = '#475569';
+        ctx.beginPath();
+        ctx.arc(ox[0], ox[1], 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      layout();
+      slider.addEventListener('input', draw);
+      resetBtn.addEventListener('click', () => {
+        slider.value = 35;
+        draw();
+      });
+      window.addEventListener('resize', () => { layout(); draw(); });
+      draw();
+    }
+
+    // ================================================================
+    //  Interactive 2: Gram-Schmidt in the plane
+    // ================================================================
+    function initGramSchmidtViz() {
+      const canvas = document.getElementById('gs-canvas');
+      if (!canvas) return;
+      const readout = {
+        a: document.getElementById('gs-a'),
+        b: document.getElementById('gs-b'),
+        p: document.getElementById('gs-p'),
+        normB: document.getElementById('gs-norm-b'),
+        q1: document.getElementById('gs-q1'),
+        q2: document.getElementById('gs-q2'),
+        dot: document.getElementById('gs-dot'),
+        qtq: document.getElementById('gs-qtq')
+      };
+      const resetBtn = document.getElementById('gs-reset');
+      const nearlyBtn = document.getElementById('gs-nearly');
+      const orthogonalBtn = document.getElementById('gs-orthogonal');
+
+      let ax = 2.4, ay = 1.1;
+      let bx = 1.2, by = 2.8;
+      let active = null;
+      let ctx, W, H, cx, cy, unit;
+
+      function layout() {
+        const fit = fitCanvas(canvas, 380);
+        ctx = fit.ctx;
+        W = fit.W;
+        H = fit.H;
+        unit = Math.min(W / 9, H / 8);
+        cx = W / 2;
+        cy = H / 2;
+      }
+
+      function toScreen(p) {
+        return [cx + p[0] * unit, cy - p[1] * unit];
+      }
+
+      function toWorld(px, py) {
+        return [(px - cx) / unit, (cy - py) / unit];
+      }
+
+      function geometry() {
+        const a = [ax, ay];
+        const b = [bx, by];
+        const aa = dot2(a, a);
+        const p = aa > 1e-12 ? mul2(dot2(a, b) / aa, a) : [0, 0];
+        const B = sub2(b, p);
+        const na = norm2(a);
+        const nb = norm2(B);
+        const q1 = na > 1e-12 ? mul2(1 / na, a) : [0, 0];
+        const q2 = nb > 1e-12 ? mul2(1 / nb, B) : [0, 0];
+        return { a, b, p, B, na, nb, q1, q2 };
+      }
+
+      function updateReadouts(g) {
+        const fmt = (v) => '[' + v[0].toFixed(2) + ', ' + v[1].toFixed(2) + ']';
+        if (readout.a) readout.a.textContent = fmt(g.a);
+        if (readout.b) readout.b.textContent = fmt(g.b);
+        if (readout.p) readout.p.textContent = fmt(g.p);
+        if (readout.normB) {
+          readout.normB.textContent = g.nb < 0.05 ? '\u2248 0 (parallel)' : g.nb.toFixed(3);
+        }
+        if (readout.q1) readout.q1.textContent = fmt(g.q1);
+        if (readout.q2) readout.q2.textContent = fmt(g.q2);
+        if (readout.dot) readout.dot.textContent = Math.abs(dot2(g.q1, g.q2)).toFixed(6);
+        if (readout.qtq) {
+          const off = dot2(g.q1, g.q2);
+          readout.qtq.innerHTML =
+            '[' + (1).toFixed(3) + ', ' + off.toFixed(3) + ']<br>' +
+            '[' + off.toFixed(3) + ', ' + (1).toFixed(3) + ']';
+        }
+      }
+
+      function draw() {
+        const g = geometry();
+        updateReadouts(g);
+
+        ctx.clearRect(0, 0, W, H);
+        drawGrid2D(ctx, W, H, cx, cy, unit);
+
+        const o = toScreen([0, 0]);
+        const sa = toScreen(g.a);
+        const sb = toScreen(g.b);
+        const sp = toScreen(g.p);
+        const sq1 = toScreen(g.q1);
+        const sq2 = toScreen(g.q2);
+
+        // Projection geometry
+        if (g.na > 1e-6) {
+          ctx.save();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          ctx.moveTo(sb[0], sb[1]);
+          ctx.lineTo(sp[0], sp[1]);
+          ctx.stroke();
+          ctx.restore();
+
+          drawArrow(ctx, o[0], o[1], sp[0], sp[1], '#d97706', 2.4, [6, 4]);
+
+          if (g.nb > 1e-6) {
+            drawArrow(ctx, sp[0], sp[1], sb[0], sb[1], '#0d9488', 3.0);
+
+            // Right-angle marker at p
+            const u = [g.a[0] / g.na, -g.a[1] / g.na];
+            const v = [g.B[0] / g.nb, -g.B[1] / g.nb];
+            const m = 12;
+            ctx.save();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(sp[0] + u[0] * m, sp[1] + u[1] * m);
+            ctx.lineTo(sp[0] + (u[0] + v[0]) * m, sp[1] + (u[1] + v[1]) * m);
+            ctx.lineTo(sp[0] + v[0] * m, sp[1] + v[1] * m);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // Original vectors
+        drawArrow(ctx, o[0], o[1], sa[0], sa[1], '#2b6cb0', 2.4);
+        drawArrow(ctx, o[0], o[1], sb[0], sb[1], '#e11d48', 2.4);
+
+        // Unit basis
+        drawArrow(ctx, o[0], o[1], sq1[0], sq1[1], '#1e3a8a', 4.2);
+        if (g.nb > 1e-6) {
+          drawArrow(ctx, o[0], o[1], sq2[0], sq2[1], '#0f766e', 4.2);
+        }
+
+        // Labels
+        drawLabel(ctx, 'a', sa[0] + 8, sa[1] - 8, '#1d4ed8');
+        drawLabel(ctx, 'b', sb[0] + 8, sb[1] - 8, '#be123c');
+        if (g.na > 1e-6) {
+          drawLabel(ctx, 'p', sp[0] - 18, sp[1] + 14, '#b45309');
+        }
+        if (g.nb > 1e-6) {
+          drawLabel(ctx, 'B', (sp[0] + sb[0]) / 2 + 8, (sp[1] + sb[1]) / 2 + 10, '#0f766e');
+        }
+        drawLabel(ctx, 'q1', sq1[0] + 7, sq1[1] + 13, '#1e3a8a');
+        if (g.nb > 1e-6) {
+          drawLabel(ctx, 'q2', sq2[0] + 7, sq2[1] - 10, '#0f766e');
+        }
+
+        // Drag handles
+        [[sa, '#2b6cb0'], [sb, '#e11d48']].forEach(([pt, color]) => {
+          ctx.save();
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(pt[0], pt[1], 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // Origin dot
+        ctx.fillStyle = '#475569';
+        ctx.beginPath();
+        ctx.arc(o[0], o[1], 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function pointerWorld(e) {
+        const rect = canvas.getBoundingClientRect();
+        const px = e.clientX - rect.left;
+        const py = e.clientY - rect.top;
+        return { px, py, world: toWorld(px, py) };
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        const { px, py } = pointerWorld(e);
+        const sa = toScreen([ax, ay]);
+        const sb = toScreen([bx, by]);
+        const da = Math.hypot(px - sa[0], py - sa[1]);
+        const db = Math.hypot(px - sb[0], py - sb[1]);
+        if (da < 24 && da <= db) active = 'a';
+        else if (db < 24) active = 'b';
+        else active = null;
+        if (active) {
+          canvas.setPointerCapture(e.pointerId);
+          canvas.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!active) {
+          const { px, py } = pointerWorld(e);
+          const sa = toScreen([ax, ay]);
+          const sb = toScreen([bx, by]);
+          const near = Math.min(Math.hypot(px - sa[0], py - sa[1]), Math.hypot(px - sb[0], py - sb[1])) < 24;
+          canvas.style.cursor = near ? 'grab' : 'crosshair';
+          return;
+        }
+        const { world } = pointerWorld(e);
+        const wx = clamp(world[0], -4.2, 4.2);
+        const wy = clamp(world[1], -3.6, 3.6);
+        if (active === 'a') {
+          if (Math.hypot(wx, wy) > 0.2) { ax = wx; ay = wy; }
+        } else if (active === 'b') {
+          if (Math.hypot(wx, wy) > 0.2) { bx = wx; by = wy; }
+        }
+        draw();
+      });
+
+      function endDrag(e) {
+        if (!active) return;
+        active = null;
+        canvas.style.cursor = 'crosshair';
+        if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) {
+          canvas.releasePointerCapture(e.pointerId);
+        }
+      }
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+
+      resetBtn.addEventListener('click', () => {
+        ax = 2.4; ay = 1.1; bx = 1.2; by = 2.8;
+        draw();
+      });
+      nearlyBtn.addEventListener('click', () => {
+        ax = 2.4; ay = 1.1; bx = 3.05; by = 1.5;
+        draw();
+      });
+      orthogonalBtn.addEventListener('click', () => {
+        ax = 2.4; ay = 1.1; bx = -1.1; by = 2.4;
+        draw();
+      });
+      window.addEventListener('resize', () => { layout(); draw(); });
+
+      layout();
+      draw();
+    }
+
+    // ================================================================
+    //  Interactive 3: 3D step-through of the lecture factorization
+    // ================================================================
+    function initQR3DViz() {
+      const canvas = document.getElementById('qr3d-canvas');
+      if (!canvas) return;
+      const desc = document.getElementById('qr3d-desc');
+      const stepLabel = document.getElementById('qr3d-step-label');
+      const prevBtn = document.getElementById('qr3d-prev');
+      const nextBtn = document.getElementById('qr3d-next');
+      const resetBtn = document.getElementById('qr3d-reset');
+
+      const a = [1, 1, 1];
+      const b = [1, 0, 2];
+      const p = [1, 1, 1];
+      const residual = [0, -1, 1];
+      const q1 = [1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3)];
+      const q2 = [0, -1 / Math.sqrt(2), 1 / Math.sqrt(2)];
+      const aPlusB = [2, 1, 3];
+
+      const steps = [
+        '<p><strong>Start.</strong> We have <em>a</em> = (1, 1, 1)<sup>T</sup> and <em>b</em> = (1, 0, 2)<sup>T</sup>. Both lie in the blue plane. The goal is an orthonormal basis for that same plane.</p>',
+        '<p><strong>Step 1 &mdash; keep the first direction.</strong> Set <em>A</em> = <em>a</em> = (1, 1, 1)<sup>T</sup>. Its length is &radic;3, so the first unit vector is <em>q</em><sub>1</sub> = <em>A</em>/&radic;3.</p>',
+        '<p><strong>Step 2 &mdash; subtract the projection.</strong> Project <em>b</em> onto <em>A</em>: <em>p</em> = (<em>A</em><sup>T</sup><em>b</em> / <em>A</em><sup>T</sup><em>A</em>)<em>A</em> = (3/3)<em>A</em> = (1, 1, 1)<sup>T</sup>. The residual is <em>B</em> = <em>b</em> &minus; <em>p</em> = (0, &minus;1, 1)<sup>T</sup>.</p>',
+        '<p><strong>Step 3 &mdash; normalize the residual.</strong> <em>B</em> is perpendicular to <em>A</em>, and &#8214;<em>B</em>&#8214; = &radic;2. Hence <em>q</em><sub>2</sub> = <em>B</em>/&radic;2. The final basis is <em>Q</em> = [<em>q</em><sub>1</sub> <em>q</em><sub>2</sub>], and the coefficients form <em>R</em> = [[&radic;3, &radic;3], [0, &radic;2]].</p>'
+      ];
+
+      let step = 0;
+      let yaw = 2.2;
+      let pitch = 0.6;
+      let dragging = false;
+      let lastX = 0;
+      let lastY = 0;
+      let ctx, W, H;
+
+      function cross(u, v) {
+        return [
+          u[1] * v[2] - u[2] * v[1],
+          u[2] * v[0] - u[0] * v[2],
+          u[0] * v[1] - u[1] * v[0]
+        ];
+      }
+      function normalize(v) {
+        const n = Math.hypot(v[0], v[1], v[2]) || 1;
+        return [v[0] / n, v[1] / n, v[2] / n];
+      }
+
+      function cameraProjector() {
+        const cp = Math.cos(pitch);
+        const cam = [cp * Math.cos(yaw), Math.sin(pitch), cp * Math.sin(yaw)];
+        const forward = [-cam[0], -cam[1], -cam[2]];
+        const right = normalize(cross(forward, [0, 1, 0]));
+        const up = cross(right, forward);
+        return (point) => [
+          dot3(point, right),
+          -dot3(point, up)
+        ];
+      }
+
+      function scenePoints() {
+        return [
+          [0, 0, 0], a, b, aPlusB, p, [p[0] + residual[0], p[1] + residual[1], p[2] + residual[2]],
+          q1, q2,
+          [2.8, 0, 0], [0, 2.8, 0], [0, 0, 2.8]
+        ];
+      }
+
+      let project = (point) => [0, 0];
+
+      function layout() {
+        const fit = fitCanvas(canvas, 420);
+        ctx = fit.ctx;
+        W = fit.W;
+        H = fit.H;
+
+        const raw = cameraProjector();
+        const pts = scenePoints().map(raw);
+        const xs = pts.map((pt) => pt[0]);
+        const ys = pts.map((pt) => pt[1]);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const spanX = Math.max(maxX - minX, 1e-6);
+        const spanY = Math.max(maxY - minY, 1e-6);
+        const pad = 40;
+        const scale = Math.min((W - 2 * pad) / spanX, (H - 2 * pad) / spanY);
+        const ox = (W - (minX + maxX) * scale) / 2;
+        const oy = (H - (minY + maxY) * scale) / 2;
+
+        project = (point) => {
+          const r = raw(point);
+          return [ox + r[0] * scale, oy + r[1] * scale];
+        };
+      }
+
+      function drawArrow3(p0, p1, color, width, dash) {
+        const s0 = project(p0);
+        const s1 = project(p1);
+        drawArrow(ctx, s0[0], s0[1], s1[0], s1[1], color, width, dash);
+      }
+
+      function label3(text, point, color, dx, dy) {
+        const s = project(point);
+        drawLabel(ctx, text, s[0] + (dx || 8), s[1] + (dy || -8), color);
+      }
+
+      function draw() {
+        layout();
+        ctx.clearRect(0, 0, W, H);
+
+        const O = project([0, 0, 0]);
+        const A = project(a);
+        const B = project(b);
+        const P = project(p);
+        const AB = project(aPlusB);
+
+        // Plane span{a, b}
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(O[0], O[1]);
+        ctx.lineTo(A[0], A[1]);
+        ctx.lineTo(AB[0], AB[1]);
+        ctx.lineTo(B[0], B[1]);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(43, 108, 176, 0.075)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(43, 108, 176, 0.28)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
+
+        // Axes
+        const axes = [
+          { end: [2.8, 0, 0], label: 'x', color: '#94a3b8' },
+          { end: [0, 2.8, 0], label: 'y', color: '#94a3b8' },
+          { end: [0, 0, 2.8], label: 'z', color: '#94a3b8' }
+        ];
+        axes.forEach((axis) => {
+          const e = project(axis.end);
+          ctx.save();
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(O[0], O[1]);
+          ctx.lineTo(e[0], e[1]);
+          ctx.stroke();
+          ctx.restore();
+          drawLabel(ctx, axis.label, e[0] + 6, e[1] + 8, '#94a3b8');
+        });
+
+        // Plane edges a+b already drawn; mark the tip faintly
+        drawLabel(ctx, 'a+b', AB[0] + 7, AB[1] + 10, '#94a3b8');
+
+        if (step === 0) {
+          drawArrow3([0, 0, 0], a, '#2b6cb0', 3);
+          drawArrow3([0, 0, 0], b, '#e11d48', 3);
+          label3('a', a, '#1d4ed8');
+          label3('b', b, '#be123c');
+        } else if (step === 1) {
+          drawArrow3([0, 0, 0], b, '#e11d48', 1.6, [5, 4]);
+          drawArrow3([0, 0, 0], a, '#2b6cb0', 3.4);
+          drawArrow3([0, 0, 0], q1, '#1e3a8a', 4.6);
+          label3('A = a', a, '#1d4ed8');
+          label3('q1', q1, '#1e3a8a', 8, 12);
+        } else if (step === 2) {
+          drawArrow3([0, 0, 0], b, '#e11d48', 1.6, [5, 4]);
+          drawArrow3([0, 0, 0], a, '#2b6cb0', 1.6, [5, 4]);
+          drawArrow3([0, 0, 0], p, '#d97706', 3.6);
+          drawArrow3(p, b, '#0d9488', 4.0);
+          label3('p', p, '#b45309', -18, 14);
+          label3('B', [p[0] + residual[0] / 2, p[1] + residual[1] / 2, p[2] + residual[2] / 2], '#0f766e', 10, 10);
+          label3('b', b, '#be123c');
+          void P;
+        } else {
+          drawArrow3([0, 0, 0], a, '#2b6cb0', 1.4, [5, 4]);
+          drawArrow3([0, 0, 0], b, '#e11d48', 1.4, [5, 4]);
+          drawArrow3([0, 0, 0], q1, '#1e3a8a', 4.6);
+          drawArrow3([0, 0, 0], q2, '#0f766e', 4.6);
+          label3('q1', q1, '#1e3a8a');
+          label3('q2', q2, '#0f766e');
+        }
+
+        // Origin dot
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(O[0], O[1], 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function updateStep() {
+        step = clamp(step, 0, steps.length - 1);
+        if (desc) desc.innerHTML = steps[step];
+        if (stepLabel) stepLabel.textContent = 'Step ' + step + ' of ' + (steps.length - 1);
+        if (prevBtn) {
+          prevBtn.disabled = step === 0;
+          prevBtn.style.opacity = step === 0 ? '0.4' : '1';
+          prevBtn.style.cursor = step === 0 ? 'not-allowed' : 'pointer';
+        }
+        if (nextBtn) {
+          nextBtn.disabled = step === steps.length - 1;
+          nextBtn.style.opacity = step === steps.length - 1 ? '0.4' : '1';
+          nextBtn.style.cursor = step === steps.length - 1 ? 'not-allowed' : 'pointer';
+        }
+        draw();
+      }
+
+      prevBtn.addEventListener('click', () => {
+        if (step > 0) { step -= 1; updateStep(); }
+      });
+      nextBtn.addEventListener('click', () => {
+        if (step < steps.length - 1) { step += 1; updateStep(); }
+      });
+      resetBtn.addEventListener('click', () => {
+        step = 0;
+        yaw = 2.2;
+        pitch = 0.6;
+        updateStep();
+      });
+
+      canvas.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        yaw -= dx * 0.008;
+        pitch = clamp(pitch + dy * 0.006, 0.05, 1.25);
+        draw();
+      });
+      function stopDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) {
+          canvas.releasePointerCapture(e.pointerId);
+        }
+      }
+      canvas.addEventListener('pointerup', stopDrag);
+      canvas.addEventListener('pointercancel', stopDrag);
+      window.addEventListener('resize', draw);
+
+      updateStep();
+    }
+  </script>
+</body>
+</html>
